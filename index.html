@@ -1,6 +1,3 @@
-
-raw
-Index · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -265,7 +262,8 @@ let humanTrajectory = [];
  
 /* ── NEW GLOBALS ── */
 let masterMode = 'raw';
-let masterGainNode = null;
+let masterGainNode = null;  /* pre-master: all sources feed here */
+let outputGainNode = null;  /* true output: only this connects to destination, MUTE controls this */
 let channelNodes = {};
 let googByteCache = {};
 let googTickInterval = null;
@@ -308,10 +306,16 @@ function activateSystem() {
  
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
  
-    /* master gain (your original destination) */
+    /* outputGainNode is the ONLY node connected to destination.
+       MUTE sets this to 0 — everything upstream goes silent regardless
+       of how many nodes connect to masterGainNode. */
+    outputGainNode = audioCtx.createGain();
+    outputGainNode.gain.setValueAtTime(1.0, audioCtx.currentTime);
+    outputGainNode.connect(audioCtx.destination);
+ 
     masterGainNode = audioCtx.createGain();
     masterGainNode.gain.setValueAtTime(0.28, audioCtx.currentTime);
-    masterGainNode.connect(audioCtx.destination);
+    masterGainNode.connect(outputGainNode);
  
     /* ── YOUR ORIGINAL: 60Hz datacenter ground hum ── */
     const subHum  = audioCtx.createOscillator();
@@ -431,29 +435,36 @@ function onProbeResult(id, latencyMs, isError) {
     const cn = channelNodes[id];
     if (!cn) return;
  
+    /* Always cache the latency — used when channel is toggled on mid-session */
+    cn.lastLatencyMs = latencyMs;
+ 
     if (isError) {
-        /* CORS / network error → audible square burst + badge */
+        /* CORS/error → audible square burst regardless of which channel is active */
         if (!corsProbeCache[id]) {
             corsProbeCache[id] = true;
             const badge = document.getElementById(`cors-${id}`);
             if (badge) badge.classList.add('on');
         }
-        if (masterMode === 'raw' && m.raw) {
+        if (masterMode !== 'mute') {
             const now = audioCtx.currentTime;
             cn.corsEnv.gain.cancelScheduledValues(now);
-            cn.corsEnv.gain.setValueAtTime(0.05, now);
+            cn.corsEnv.gain.setValueAtTime(0.04, now);
             cn.corsEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
         }
         logTrack('CORS', `BLOCK ← ${m.label} // ${latencyMs.toFixed(1)}ms // REJECTED`, 'cors');
         return;
     }
  
-    /* True latency → frequency. Full float, no modulo, no cap. */
+    /* RAW: latency → frequency */
     if (masterMode === 'raw' && m.raw) {
         const hz = BASE_FREQ[id] + (latencyMs * 0.6);
         cn.osc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.08);
         logTrack('RAW', `${m.label} // ${latencyMs.toFixed(2)}ms → ${hz.toFixed(1)}Hz`, 'raw');
-        updateChannelAmp(id);
+        /* Ensure gain is open if channel is active */
+        if (cn.chGain.gain.value < 0.001) {
+            const amp = WAVE_TYPE[id] === 'sine' ? 0.07 : 0.012;
+            cn.chGain.gain.setTargetAtTime(amp, audioCtx.currentTime, 0.1);
+        }
     }
 }
  
@@ -496,7 +507,7 @@ function tickGoogGrain(id) {
     gEnv.gain.setValueAtTime(0.016, audioCtx.currentTime);
     gEnv.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
     gOsc.connect(gEnv);
-    gEnv.connect(masterGainNode);
+    gEnv.connect(masterGainNode); /* → outputGainNode → destination */
     gOsc.start();
     gOsc.stop(audioCtx.currentTime + 0.045);
 }
@@ -520,26 +531,49 @@ function stopGoogLoop() {
 /* ── GAINS ── */
 function applyChannelGains() {
     if (!audioCtx) return;
+ 
     if (masterMode === 'mute') {
-        masterGainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+        /* MUTE: silence the single true output — catches everything */
+        outputGainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
         stopGoogLoop();
         return;
     }
-    masterGainNode.gain.setTargetAtTime(0.28, audioCtx.currentTime, 0.1);
-    Object.keys(MUSEUMS).forEach(id => updateChannelAmp(id));
-    if (masterMode === 'goog') startGoogLoop();
-    else stopGoogLoop();
-}
  
-function updateChannelAmp(id) {
-    if (!audioCtx) return;
-    const m  = MUSEUMS[id];
-    const cn = channelNodes[id];
-    if (!cn) return;
-    let amp = 0;
-    if (masterMode === 'raw'  && m.raw)  amp = WAVE_TYPE[id] === 'sine' ? 0.07 : 0.012;
-    if (masterMode === 'goog' && m.goog) amp = 0; /* goog uses grain system */
-    cn.chGain.gain.setTargetAtTime(amp, audioCtx.currentTime, 0.12);
+    /* Un-mute */
+    outputGainNode.gain.setTargetAtTime(1.0, audioCtx.currentTime, 0.05);
+ 
+    Object.keys(MUSEUMS).forEach(id => {
+        const m  = MUSEUMS[id];
+        const cn = channelNodes[id];
+        if (!cn) return;
+ 
+        if (masterMode === 'raw') {
+            /* RAW: oscillator audible if channel has raw:true.
+               Immediately set frequency from last known latency so toggle
+               has instant audible effect — no waiting for next probe. */
+            if (m.raw) {
+                const amp = WAVE_TYPE[id] === 'sine' ? 0.07 : 0.012;
+                cn.chGain.gain.setTargetAtTime(amp, audioCtx.currentTime, 0.1);
+                /* If we have a cached latency, apply it now */
+                if (cn.lastLatencyMs !== undefined) {
+                    const hz = BASE_FREQ[id] + (cn.lastLatencyMs * 0.6);
+                    cn.osc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.08);
+                }
+            } else {
+                cn.chGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+            }
+            /* Always silence GOOG grain channel when in RAW mode */
+            stopGoogLoop();
+ 
+        } else if (masterMode === 'goog') {
+            /* GOOG: silence RAW oscillators, let grain system handle output */
+            cn.chGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+            if (m.goog) {
+                if (!googByteCache[id]) fetchGoogBytes(id);
+            }
+            startGoogLoop();
+        }
+    });
 }
  
 /* ── CONTROLS ── */
@@ -928,7 +962,7 @@ function toggleMode() {
 function startVU() {
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 256;
-    masterGainNode.connect(analyser);
+    outputGainNode.connect(analyser);
     const buf = new Uint8Array(analyser.frequencyBinCount);
     const bar = document.getElementById('vu-bar');
  
@@ -937,7 +971,7 @@ function startVU() {
         let sum = 0;
         for (let i = 0; i < buf.length; i++) sum += buf[i];
         bar.style.width = ((sum / buf.length / 255) * 100).toFixed(1) + '%';
-        bar.style.background = masterMode === 'goog' ? '#ccaa00' : '#00cc66';
+        bar.style.background = masterMode === 'goog' ? '#ccaa00' : masterMode === 'mute' ? '#333' : '#00cc66';
         vuRafId = requestAnimationFrame(tick);
     }
     tick();
