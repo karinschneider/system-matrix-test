@@ -96,9 +96,6 @@
             letter-spacing: 0.04em;
             min-height: 16px;
         }
-        #status-bar span.cors { color: var(--cors-color); }
-        #status-bar span.raw  { color: var(--raw-color); }
-        #status-bar span.goog { color: var(--goog-color); }
 
         /* ── CONSOLE (switchboard) ── */
         #console-zone {
@@ -356,8 +353,7 @@
             </span>
         </div>
 
-        <div id="museum-grid">
-            </div>
+        <div id="museum-grid"></div>
 
         <div class="global-actions">
             <span class="g-btn" onclick="globalOverride('all')">──► [OPEN ALL]</span>
@@ -423,26 +419,22 @@ const CONSONANT_CLUSTER_RE = /[bcdfghjklmnpqrstvwxyz]{2,}/gi;
 const VOWELS = new Set('aeiouAEIOU');
 
 /* ── DOM REFS ── */
-const cursor      = document.getElementById('cursor');
-const statusBar   = document.getElementById('status-bar');
-const ledgerEl    = document.getElementById('ledger');
-const gridEl      = document.getElementById('grid-matrix');
-const resumeEl    = document.getElementById('resume-rows');
-const vuBar       = document.getElementById('audio-vu-bar');
-const bootPrompt  = document.getElementById('boot-prompt');
+let cursor, statusBar, ledgerEl, gridEl, resumeEl, vuBar, bootPrompt, museumGridEl;
 
 /* ════════════════════════ INTERACTION MONITOR ════════════════════════ */
 document.addEventListener('mousemove', e => {
-    cursor.style.left = e.clientX + 'px';
-    cursor.style.top  = e.clientY + 'px';
+    if (cursor) {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top  = e.clientY + 'px';
+    }
     const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    statusBar.innerHTML = `[${ts}] // NODE:USER // X:${e.clientX} Y:${e.clientY}`;
+    if (statusBar) statusBar.innerHTML = `[${ts}] // NODE:USER // X:${e.clientX} Y:${e.clientY}`;
 });
 
 /* ════════════════════════ AUDIO Matrix INITIALIZE ════════════════════════ */
 function boot() {
     if (audioCtx) return;
-    bootPrompt.classList.add('hidden');
+    if (bootPrompt) bootPrompt.classList.add('hidden');
 
     audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain();
@@ -456,8 +448,8 @@ function boot() {
 
 /* ════════════════════════ CONSOLE ROUTER ENGINE ════════════════════════ */
 function buildMuseumGrid() {
-    const grid = document.getElementById('museum-grid');
-    grid.innerHTML = Object.entries(MUSEUMS).map(([id, m]) => `
+    if (!museumGridEl) return;
+    museumGridEl.innerHTML = Object.entries(MUSEUMS).map(([id, m]) => `
         <div class="museum-cell" id="cell-${id}">
             <div class="museum-name">[${m.label}]
                 <span class="cors-badge" id="cors-${id}">CORS!</span>
@@ -541,7 +533,8 @@ function handleRawResult(id, latencyMs, isCorsOrError) {
     if (isCorsOrError) {
         if (!corsProbeCache[id]) {
             corsProbeCache[id] = true;
-            document.getElementById(`cors-${id}`).classList.add('show');
+            const badge = document.getElementById(`cors-${id}`);
+            if (badge) badge.classList.add('show');
             log('CORS', `BLOCK ← ${m.label} // latency:${latencyMs.toFixed(2)}ms // HANDSHAKE REJECTED`, 'cors');
         }
         const now = audioCtx.currentTime;
@@ -557,11 +550,347 @@ function handleRawResult(id, latencyMs, isCorsOrError) {
     updateGainForChannel(id);
 }
 
-/* ─── CORPORATE CAPTURE CONDUIT ─── */
+/* ─── GOOG TRANSCRIPTION ─── */
 async function fetchGoogBytes(id) {
     if (googByteCache[id]) return;
     const m = MUSEUMS[id];
     try {
         await fetch(m.googUrl, { mode: 'no-cors', cache: 'no-store' });
         googByteCache[id] = m.googUrl.split('').map(c => c.charCodeAt(0));
-        log('GOOG', `${m.label} // CDN OPAQUE — URL BYTES TRANSDUCED (${goog
+        log('GOOG', `${m.label} // CDN OPAQUE — URL BYTES TRANSDUCED (${googByteCache[id].length}b)`, 'goog');
+    } catch (err) {
+        googByteCache[id] = (err.message || 'CORS').split('').map(c => c.charCodeAt(0));
+        log('CORS', `${m.label} // CDN BLOCKED — ERROR BYTES TRANSDUCED`, 'cors');
+        const badge = document.getElementById(`cors-${id}`);
+        if (badge) badge.classList.add('show');
+    }
+}
+
+function tickGoogGrain(id) {
+    if (!audioCtx || masterMode !== 'goog') return;
+    const m = MUSEUMS[id];
+    const cn = channelNodes[id];
+    if (!m.goog) return;
+    const bytes = googByteCache[id];
+    if (!bytes || bytes.length === 0) return;
+
+    const idx = cn.googGrainIdx % bytes.length;
+    const byte = bytes[idx];
+    cn.googGrainIdx++;
+
+    const hz = 200 + (byte / 255) * 7800;
+
+    const grainOsc = audioCtx.createOscillator();
+    grainOsc.type = 'sine';
+    grainOsc.frequency.setValueAtTime(hz, audioCtx.currentTime);
+
+    const grainEnv = audioCtx.createGain();
+    grainEnv.gain.setValueAtTime(0.018, audioCtx.currentTime);
+    grainEnv.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
+
+    grainOsc.connect(grainEnv);
+    grainEnv.connect(masterGain);
+    grainOsc.start();
+    grainOsc.stop(audioCtx.currentTime + 0.045);
+
+    log('GOOG', `${m.label} // BYTE[${idx}]=${byte} → ${hz.toFixed(0)}Hz`, 'goog');
+}
+
+function startGoogLoop() {
+    if (googTickInterval) return;
+    googTickInterval = setInterval(() => {
+        if (masterMode !== 'goog') return;
+        Object.keys(MUSEUMS).forEach(async id => {
+            if (!MUSEUMS[id].goog) return;
+            if (!googByteCache[id]) await fetchGoogBytes(id);
+            tickGoogGrain(id);
+        });
+    }, 55);
+}
+
+function applyGains() {
+    if (!audioCtx) return;
+    if (masterMode === 'mute') {
+        masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+        if (vuBar) vuBar.style.width = '0%';
+        if (googTickInterval) { clearInterval(googTickInterval); googTickInterval = null; }
+        return;
+    }
+    masterGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1);
+
+    Object.entries(MUSEUMS).forEach(([id, m]) => {
+        const cn = channelNodes[id];
+        if (cn) updateGainForChannel(id);
+    });
+
+    if (masterMode === 'goog') {
+        startGoogLoop();
+        if (vuBar) vuBar.style.background = 'var(--goog-color)';
+    } else {
+        if (googTickInterval) { clearInterval(googTickInterval); googTickInterval = null; }
+        if (vuBar) vuBar.style.background = 'var(--raw-color)';
+    }
+}
+
+function updateGainForChannel(id) {
+    if (!audioCtx) return;
+    const m = MUSEUMS[id];
+    const cn = channelNodes[id];
+    if (!cn) return;
+
+    let amp = 0;
+    if (masterMode === 'raw' && m.raw) amp = WAVE_TYPE[id] === 'sine' ? 0.07 : 0.012;
+    cn.chGain.gain.setTargetAtTime(amp, audioCtx.currentTime, 0.12);
+}
+
+/* ── INTERFACE CONTROLS ── */
+function setMaster(mode) {
+    masterMode = mode;
+    ['raw','goog','mute'].forEach(k => {
+        const el = document.getElementById(`m-${k}`);
+        if (el) {
+            el.textContent = k === mode ? '(•)' : '( )';
+            el.className = k === mode ? 'dot on' : 'dot off';
+        }
+    });
+    applyGains();
+    log('SYS', `MASTER ROUTE → ${mode.toUpperCase()}`);
+}
+
+function toggleChannel(id, type) {
+    MUSEUMS[id][type] = !MUSEUMS[id][type];
+    const el = document.getElementById(`${id}-${type}`);
+    if (el) {
+        el.textContent = MUSEUMS[id][type] ? '(•)' : '( )';
+        el.className = 'dot ' + (MUSEUMS[id][type] ? 'on' : 'off');
+    }
+    if (audioCtx) {
+        applyGains();
+        if (type === 'goog' && MUSEUMS[id].goog) fetchGoogBytes(id);
+    }
+}
+
+function globalOverride(action) {
+    Object.entries(MUSEUMS).forEach(([id, m]) => {
+        if (action === 'all')  { m.raw = true; m.goog = true; }
+        if (action === 'mute') { m.raw = false; m.goog = false; }
+        ['raw','goog'].forEach(t => {
+            const el = document.getElementById(`${id}-${t}`);
+            if (el) { el.textContent = m[t] ? '(•)' : '( )'; el.className = 'dot ' + (m[t]?'on':'off'); }
+        });
+    });
+    if (audioCtx) {
+        if (action === 'all' && masterMode === 'goog') Object.keys(MUSEUMS).forEach(id => fetchGoogBytes(id));
+        applyGains();
+    }
+}
+
+/* ── LAYOUT DECONSTRUCTION MECHANICS ── */
+const GATE_LAYOUTS = {
+    scatter: () => randomLayouts(),
+    stack:   () => stackLayouts(),
+    wide:    () => wideLayouts(),
+    dense:   () => denseLayouts(),
+    reverse: () => reverseBlocks(),
+    shuffle: () => shuffleBlocks(),
+    tall:    () => tallLayouts()
+};
+
+function gateOp(op) {
+    const btn = document.querySelector(`.gate-op[onclick="gateOp('${op}')"]`);
+    if (btn) {
+        btn.classList.add('fired');
+        setTimeout(() => btn.classList.remove('fired'), 400);
+    }
+
+    GATE_LAYOUTS[op]?.();
+    log('GATE', `OPERATOR:${op.toUpperCase()} // LAYOUT SHELL MUTATED`);
+    if (audioCtx) playStringSound(op, 0.2);
+}
+
+function randomLayouts() {
+    const blocks = [...document.querySelectorAll('.block')];
+    const cols = [2,3,4,5,6];
+    const rows = [1,2,3];
+    blocks.forEach(b => {
+        b.style.gridColumn = `span ${cols[Math.floor(performance.now() * b.offsetLeft) % cols.length]}`;
+        b.style.gridRow    = `span ${rows[Math.floor(performance.now() * b.offsetTop) % rows.length]}`;
+    });
+}
+function stackLayouts() {
+    document.querySelectorAll('.block').forEach((b,i) => {
+        b.style.gridColumn = `span ${(i%3===0)?5:(i%3===1)?4:3}`;
+        b.style.gridRow    = 'span 2';
+    });
+}
+function wideLayouts() {
+    document.querySelectorAll('.block').forEach((b,i) => {
+        b.style.gridColumn = `span ${(i%2===0)?8:4}`;
+        b.style.gridRow    = 'span 1';
+    });
+}
+function denseLayouts() {
+    document.querySelectorAll('.block').forEach(b => {
+        b.style.gridColumn = 'span 2';
+        b.style.gridRow    = 'span 1';
+    });
+}
+function reverseBlocks() {
+    if (!gridEl) return;
+    const blocks = [...gridEl.children];
+    blocks.reverse().forEach(b => gridEl.appendChild(b));
+}
+function shuffleBlocks() {
+    if (!gridEl) return;
+    const blocks = [...gridEl.children];
+    const seed = performance.now() | 0;
+    for (let i = blocks.length - 1; i > 0; i--) {
+        const j = (seed * (i+1) * 2654435761 >>> 0) % (i+1);
+        gridEl.appendChild(blocks[j]);
+        blocks.splice(j, 1);
+    }
+}
+function tallLayouts() {
+    document.querySelectorAll('.block').forEach((b,i) => {
+        b.style.gridColumn = `span ${(i%4===0)?6:2}`;
+        b.style.gridRow    = `span ${(i%4===0)?1:3}`;
+    });
+}
+
+/* ─── PHONETIC PARSING STREAM ─── */
+function playStringSound(str, globalGain = 1.0) {
+    if (!audioCtx || masterMode === 'mute') return;
+
+    const chars  = str.split('');
+    let timeHead = audioCtx.currentTime + 0.01;
+
+    const clusters = new Set();
+    let m;
+    const re = CONSONANT_CLUSTER_RE;
+    re.lastIndex = 0;
+    while ((m = re.exec(str)) !== null) {
+        for (let i = m.index; i < m.index + m[0].length; i++) clusters.add(i);
+    }
+
+    chars.forEach((ch, idx) => {
+        const code = ch.charCodeAt(0);
+        if (code < 32) return;
+
+        if (ch === ',' || ch === ' ') {
+            timeHead += 0.025;
+            return;
+        }
+
+        const freq = 80 + ((code - 32) / 95) * 2720;
+        const isVowel    = VOWELS.has(ch);
+        const isCluster  = clusters.has(idx);
+        const duration   = isVowel ? 0.09 : isCluster ? 0.03 : 0.05;
+        const amp        = (isCluster ? 0.06 : isVowel ? 0.02 : 0.035) * globalGain;
+
+        const osc = audioCtx.createOscillator();
+        osc.type  = isCluster ? 'square' : 'sine';
+        osc.frequency.setValueAtTime(freq, timeHead);
+
+        const env = audioCtx.createGain();
+        env.gain.setValueAtTime(amp, timeHead);
+        env.gain.exponentialRampToValueAtTime(0.0001, timeHead + duration);
+
+        osc.connect(env);
+        env.connect(masterGain);
+        osc.start(timeHead);
+        osc.stop(timeHead + duration + 0.005);
+
+        timeHead += duration * 0.7;
+    });
+
+    log('LING', `TRANSDUCED ${chars.length} CHARS PHONETIC TRANSITIONAL WAVE`);
+}
+
+function mutateBlock(el) {
+    if (!gridEl) return;
+    const txt = el.getAttribute('data-text') || '';
+    const blocks = [...gridEl.children];
+    const pivot  = txt.length % blocks.length;
+    const before = blocks.slice(0, pivot);
+    const after  = blocks.slice(pivot);
+    [...after, ...before].forEach(b => gridEl.appendChild(b));
+
+    if (audioCtx) playStringSound(txt);
+
+    log('SWIFT', `RUPTURED FIELD NODE // ${txt.length} BYTES INTERCEPTED`);
+    if (cursor) cursor.classList.add('active');
+    setTimeout(() => { if (cursor) cursor.classList.remove('active'); }, 200);
+}
+
+/* ════════════════════════ LEDGER COMPILER ════════════════════════ */
+async function loadVCS() {
+    let lines = [];
+    try {
+        const res = await fetch('data.vcs');
+        rawCsvText = await res.text();
+        lines = rawCsvText.trim().split('\n').slice(1);
+        log('VCS', `REPOSITORY LOADED — ${lines.length} ENTRIES`);
+    } catch(e) {
+        log('VCS', 'data.vcs NOT DETECTED — FORCING STANDARD REPOSITORY LAYOUT');
+        rawCsvText = demoVCS();
+        lines = rawCsvText.trim().split('\n').slice(1);
+    }
+
+    const entries = lines.map(line => {
+        const c = line.split(',');
+        return {
+            year:     (c[0]||'').trim(),
+            mode:     (c[1]||'').trim(),
+            entry:    (c[2]||'').trim(),
+            context:  (c[3]||'').trim(),
+            venue:    (c[4]||'').trim(),
+            location: (c[5]||'').trim(),
+            raw: line
+        };
+    }).filter(e => e.year);
+
+    const countEl = document.getElementById('ledger-count');
+    if (countEl) countEl.textContent = `${entries.length} RECORDS`;
+    buildGrid(entries);
+    buildResume(entries);
+}
+
+function demoVCS() {
+    return `year,mode,entry,context,venue,location
+2024,solo,Structural Residue,Permanent Collection,Whitney Museum,New York
+2023,group,Liquid Architectures,Group Exhibition,Centre Pompidou,Paris
+2022,film,Passage Through,Screening,MoMA SP,São Paulo
+2021,solo,Index of Surfaces,Solo Show,Muzeum Sztuki,Łódź
+2020,performance,Threshold Frequency,Performance,Museo Moderno,Buenos Aires
+2019,group,Carrier Signal,Group Exhibition,MMSU,Rijeka
+2018,publication,On Network Topology,Essay,,
+2017,solo,Interference Pattern,Solo Show,Whitney Museum,New York
+2016,group,Surface Tension,Group Exhibition,Centre Pompidou,Paris`;
+}
+
+/* ════════════════════════ MATRIX BLOCK RENDERING ════════════════════════ */
+const SPAN_PATTERNS = [
+    {col:'span 4',row:'span 2'},{col:'span 5',row:'span 3'},{col:'span 3',row:'span 2'},
+    {col:'span 5',row:'span 2'},{col:'span 4',row:'span 3'},{col:'span 3',row:'span 2'},
+    {col:'span 6',row:'span 2'},{col:'span 3',row:'span 3'},{col:'span 4',row:'span 2'},
+    {col:'span 5',row:'span 2'},{col:'span 3',row:'span 2'},{col:'span 4',row:'span 3'}
+];
+
+function catFromMode(raw) {
+    const m = raw.toLowerCase().trim();
+    if (['solo','group','screening','performance','other'].includes(m)) return 'shows';
+    if (['press','publication','publications','editorial','essay','writing'].includes(m)) return 'writing';
+    if (['film','video','16 mm','sound','multi','digital video','4k'].includes(m)) return 'time-based_media';
+    if (m.includes('collect')) return 'collection';
+    if (m.includes('founding')) return 'founding';
+    if (m === 'code') return 'code';
+    return 'plus';
+}
+
+function buildGrid(entries) {
+    if (!gridEl) return;
+    gridEl.innerHTML = entries.map((e, idx) => {
+        const cat   = catFromMode(e.mode);
+        const span  = SPAN_PATTERNS[idx % SPAN_PATTERNS.length];
+        const label = `${e.year}_${cat.toUpperCase()}_${e.entry.replace(/[^a-zA-Z0-9]/g,'-')}`;
+        const img   = `images/${e.year
