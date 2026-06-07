@@ -5,589 +5,1027 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karin Schneider | System Index</title>
     <style>
-        :root { 
-            --bg: #ffffff; 
-            --text: #000000; 
-            --accent: #666666; 
-            --border: #dddddd; 
+        :root {
+            --bg: #000000;
+            --text: #ffffff;
+            --dim: #444444;
+            --mid: #888888;
+            --border: #222222;
             --mono: "Courier New", Courier, monospace;
+            --cors-color: #ff3300;
+            --raw-color: #00ff88;
+            --goog-color: #ffcc00;
         }
-        body.dark-mode { 
-            --bg: #000000; 
-            --text: #ffffff; 
-            --accent: #999999; 
-            --border: #333333; 
+        body.light {
+            --bg: #f5f4f0;
+            --text: #0a0a0a;
+            --dim: #bbbbbb;
+            --mid: #666666;
+            --border: #d0d0d0;
         }
-        
-        body { 
-            background-color: var(--bg); color: var(--text); 
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
-            -webkit-font-smoothing: antialiased;
-            margin: 40px; padding-bottom: 60px;
-            font-size: 13px; line-height: 1.5; letter-spacing: -0.01em; 
-            transition: background-color 0.2s, color 0.2s;
-            position: relative; min-height: calc(100vh - 80px);
-            box-sizing: border-box;
-        }
-        
-        header { margin-bottom: 30px; }
-        .header-top { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--text); padding-bottom: 20px; }
-        .title { font-size: 20px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
-        
-        .system-log-zone {
+ 
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+ 
+        body {
+            background: var(--bg);
+            color: var(--text);
             font-family: var(--mono);
             font-size: 11px;
-            margin-top: 20px;
+            line-height: 1.5;
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+            cursor: none;
+        }
+ 
+        /* ── CUSTOM CURSOR ── */
+        #cursor {
+            position: fixed;
+            width: 8px; height: 8px;
+            background: var(--text);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%,-50%);
+            mix-blend-mode: difference;
+            transition: width 0.15s, height 0.15s;
+        }
+        #cursor.active { width: 32px; height: 32px; border-radius: 2px; }
+ 
+        /* ── LAYOUT ── */
+        #shell {
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            min-height: 100vh;
+            padding: 28px 32px 32px;
+            gap: 0;
+        }
+ 
+        /* ── HEADER ── */
+        #header {
+            border-bottom: 1px solid var(--text);
+            padding-bottom: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+        #main-name {
+            font-size: 18px;
+            font-weight: normal;
+            letter-spacing: 0.18em;
             text-transform: uppercase;
         }
-        .log-text-line { margin-bottom: 10px; line-height: 1.4; word-break: break-all; }
-        
-        .master-toggle-line, .console-matrix-row {
-            font-family: var(--mono);
-            font-size: 11px;
-            margin: 15px 0;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .console-matrix-row { gap: 25px; margin: 10px 0; }
-        
-        .console-divider {
-            font-family: var(--mono);
-            font-size: 11px;
+        #sys-btn {
+            background: none;
+            border: 1px solid var(--text);
             color: var(--text);
-            margin: 15px 0 10px 0;
-            border-bottom: 1px solid var(--text);
-            padding-bottom: 5px;
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            padding: 3px 10px;
+            cursor: none;
+            text-transform: uppercase;
         }
-
-        .selectable-node {
-            cursor: pointer;
-            user-select: none;
+        #sys-btn:hover { background: var(--text); color: var(--bg); }
+ 
+        /* ── STATUS BAR ── */
+        #status-bar {
+            font-size: 10px;
+            color: var(--mid);
+            margin-bottom: 18px;
+            letter-spacing: 0.04em;
+            min-height: 16px;
+        }
+        #status-bar span.cors { color: var(--cors-color); }
+        #status-bar span.raw  { color: var(--raw-color); }
+        #status-bar span.goog { color: var(--goog-color); }
+ 
+        /* ── CONSOLE (switchboard) ── */
+        #console-zone {
+            border: 1px solid var(--border);
+            padding: 14px 18px;
+            margin-bottom: 20px;
+        }
+        #console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+        #console-title { letter-spacing: 0.2em; font-size: 10px; text-transform: uppercase; }
+        .master-row {
+            display: flex;
+            gap: 22px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        .master-label { color: var(--mid); margin-right: 4px; }
+        .master-row .node { display: inline-flex; align-items: center; gap: 5px; cursor: none; }
+        .master-row .node:hover { color: var(--raw-color); }
+        .master-row .node[data-mode="goog"]:hover { color: var(--goog-color); }
+        .master-row .node[data-mode="mute"]:hover { color: var(--cors-color); }
+ 
+        /* per-museum rows */
+        #museum-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px 20px;
+        }
+        .museum-cell { font-size: 10px; }
+        .museum-name {
+            letter-spacing: 0.1em;
+            color: var(--mid);
+            margin-bottom: 4px;
+        }
+        .channel-row { display: flex; gap: 12px; }
+        .ch-node {
+            cursor: none;
             display: inline-flex;
             align-items: center;
             gap: 4px;
+            user-select: none;
         }
-        .selectable-node:hover { color: var(--accent); }
-
-        .mode-toggle { 
-            border: 1px solid var(--text); background: none; padding: 4px 12px; 
-            cursor: pointer; font-size: 11px; text-transform: uppercase; 
-            font-weight: 500; color: var(--text); transition: all 0.2s;
+        .ch-node:hover .dot { color: var(--raw-color); }
+        .ch-node[data-type="goog"]:hover .dot { color: var(--goog-color); }
+        .dot { transition: color 0.15s; }
+        .dot.on { color: var(--text); }
+        .dot.off { color: var(--dim); }
+ 
+        /* CORS badge */
+        .cors-badge {
+            display: none;
+            color: var(--cors-color);
+            font-size: 9px;
+            margin-left: 4px;
+            animation: blink 1.2s step-end infinite;
         }
-        .mode-toggle:hover { background: var(--text); color: var(--bg); }
-        
-        #grid-matrix { 
-            display: grid; grid-template-columns: repeat(12, 1fr); auto-rows: 140px; 
-            gap: 15px; width: 100%; margin-top: 30px; margin-bottom: 60px;
+        .cors-badge.show { display: inline; }
+        @keyframes blink { 50% { opacity: 0; } }
+ 
+        .global-actions { display: flex; gap: 14px; margin-top: 12px; }
+        .g-btn { cursor: none; color: var(--mid); }
+        .g-btn:hover { color: var(--text); }
+ 
+        /* ── BOOT PROMPT ── */
+        #boot-prompt {
+            border: 1px dashed var(--border);
+            padding: 22px;
+            text-align: center;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            cursor: none;
+            color: var(--mid);
+            margin-bottom: 20px;
+            transition: color 0.2s, border-color 0.2s;
         }
-        
-        .block { 
-            border: 1px solid var(--text); position: relative; 
-            display: flex; flex-direction: column; justify-content: flex-end; 
-            padding: 15px; cursor: pointer; overflow: hidden; background: var(--bg);
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s;
+        #boot-prompt:hover { color: var(--text); border-color: var(--text); }
+        #boot-prompt.hidden { display: none; }
+ 
+        /* ── LEDGER ── */
+        #ledger {
+            font-size: 10px;
+            color: var(--mid);
+            line-height: 1.6;
+            margin-bottom: 18px;
+            min-height: 64px;
+            overflow: hidden;
         }
-        .block:hover { border-color: var(--accent); transform: scale(1.01); }
-        
-        .asset-img { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: cover; opacity: 0; transition: opacity 0.4s, filter 0.3s; 
-            z-index: 1; pointer-events: none;
+        .ledger-line { display: flex; gap: 8px; }
+        .ledger-line .ts { color: var(--dim); flex-shrink: 0; }
+        .ledger-line .agent { flex-shrink: 0; min-width: 80px; }
+        .ledger-line .agent.cors { color: var(--cors-color); }
+        .ledger-line .agent.raw  { color: var(--raw-color); }
+        .ledger-line .agent.goog { color: var(--goog-color); }
+        .ledger-line .detail { word-break: break-all; }
+ 
+        /* ── GATE OPERATORS ── */
+        #gate-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
-        .asset-img.revealed { opacity: 0.85; }
-        .block:hover .asset-img.revealed { opacity: 1; filter: invert(1) contrast(1.2); }
-        
-        .generative-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
-        
-        .identity-label { 
-            position: relative; font-size: 10px; font-weight: bold; 
-            letter-spacing: 0.05em; background: var(--bg); color: var(--text);
-            padding: 4px 8px; display: inline-block; max-width: 100%;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            border: 1px solid var(--text); z-index: 5; margin-top: auto;
+        .gate-op {
+            cursor: none;
+            border: 1px solid var(--border);
+            padding: 3px 8px;
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            color: var(--mid);
+            transition: all 0.15s;
+            user-select: none;
         }
-
-        #ledger-container {
-            font-family: var(--mono); font-size: 10px; color: var(--accent);
-            line-height: 1.5; margin-top: 20px; margin-bottom: 20px; display: flex; flex-direction: column;
+        .gate-op:hover { border-color: var(--text); color: var(--text); }
+        .gate-op.fired { border-color: var(--raw-color); color: var(--raw-color); }
+ 
+        /* ── MAIN GRID ── */
+        #grid-matrix {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            auto-rows: 120px;
+            gap: 10px;
+            margin-bottom: 40px;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
-
-        #audio-prompt {
-            border: 1px dashed var(--text); padding: 20px; margin-top: 20px; margin-bottom: 25px;
-            color: var(--text); display: flex; justify-content: center; 
-            align-items: center; font-size: 12px; letter-spacing: 2px; 
-            font-weight: bold; cursor: pointer; text-transform: uppercase;
+ 
+        .block {
+            border: 1px solid var(--border);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 10px;
+            cursor: none;
+            overflow: hidden;
+            background: var(--bg);
+            transition: border-color 0.2s;
         }
-
-        #orbital-lens { 
-            position: fixed; width: 30px; height: 30px; background: var(--text); 
-            border-radius: 50%; pointer-events: none; z-index: 100; 
-            transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s, background-color 0.3s; 
-            mix-blend-mode: difference; 
+        .block:hover { border-color: var(--text); }
+        .block.active-sound { border-color: var(--raw-color); }
+        .block.active-sound.goog-mode { border-color: var(--goog-color); }
+ 
+        .block-canvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 1;
+        }
+        .block-img {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover; opacity: 0;
+            transition: opacity 0.4s;
+            z-index: 2; pointer-events: none;
+        }
+        .block-img.vis { opacity: 0.7; }
+        .block:hover .block-img.vis { opacity: 1; filter: invert(1); }
+ 
+        .block-label {
+            position: relative; z-index: 5;
+            font-size: 9px;
+            letter-spacing: 0.04em;
+            background: var(--bg);
+            color: var(--text);
+            padding: 3px 6px;
+            border: 1px solid var(--border);
+            display: inline-block;
+            max-width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+ 
+        /* ── RESUME LEDGER (bottom) ── */
+        #resume-ledger {
+            border-top: 1px solid var(--border);
+            padding-top: 18px;
+            font-size: 10px;
+            color: var(--mid);
+        }
+        #resume-ledger .r-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            color: var(--text);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+        .r-row {
+            display: grid;
+            grid-template-columns: 56px 80px 1fr 1fr 1fr;
+            gap: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+            transition: color 0.15s;
+        }
+        .r-row:hover { color: var(--text); }
+        .r-row .r-year { color: var(--dim); }
+ 
+        /* ── SOUND ACTIVITY BAR ── */
+        #audio-vu {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--bg);
+            z-index: 200;
+        }
+        #audio-vu-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--raw-color);
+            transition: width 0.08s, background 0.3s;
         }
     </style>
 </head>
-<body class="dark-mode">
-
-    <header>
-        <div class="header-top">
-            <div class="title" id="main-name">K.ari.n Schneider</div>
-            <button class="mode-toggle" onclick="toggleMode()">Invert System</button>
-        </div>
-
-        <div class="system-log-zone">
-            <div class="log-text-line" id="live-timestamp-log">[SIGNAL RECEPTOR IDLE] // CLICK INITIALIZE TO ROUTE INSTITUTIONAL NETWORKS</div>
-            <div class="master-toggle-line">
-                <span class="selectable-node" onclick="toggleMasterUser('raw')"><span id="m-raw">(•)</span> RAW</span>
-                <span class="selectable-node" onclick="toggleMasterUser('goog')"><span id="m-goog">( )</span> GOOG</span>
-                <span class="selectable-node" onclick="toggleMasterUser('mute')"><span id="m-mute">( )</span> [MUTE]</span>
-            </div>
-        </div>
-
-        <div class="console-divider">========================================== CONSOLE =======================================</div>
-        
-        <div class="console-matrix-row">
-            <div>
-                <div>[WHITNEY]</div>
-                <div class="selectable-node" onclick="toggleChannel('whitney','raw')"><span id="whitney-raw">(•)</span> RAW</div>
-                <div class="selectable-node" onclick="toggleChannel('whitney','goog')"><span id="whitney-goog">( )</span> GOOG</div>
-            </div>
-            <div>
-                <div>[POMPIDOU]</div>
-                <div class="selectable-node" onclick="toggleChannel('pompidou','raw')"><span id="pompidou-raw">( )</span> RAW</div>
-                <div class="selectable-node" onclick="toggleChannel('pompidou','goog')"><span id="pompidou-goog">(•)</span> GOOG</div>
-            </div>
-            <div>
-                <div>[SZTUKI]</div>
-                <div class="selectable-node" onclick="toggleChannel('sztuki','raw')"><span id="sztuki-raw">(•)</span> RAW</div>
-                <div class="selectable-node" onclick="toggleChannel('sztuki','goog')"><span id="sztuki-goog">( )</span> GOOG</div>
-            </div>
-            <div>
-                <div>[MoMA SP]</div>
-                <div class="selectable-node" onclick="toggleChannel('momasp','raw')"><span id="momasp-raw">( )</span> RAW</div>
-                <div class="selectable-node" onclick="toggleChannel('momasp','goog')"><span id="momasp-goog">(•)</span> GOOG</div>
-            </div>
-            <div>
-                <div>[MODERNO]</div>
-                <div class="selectable-node" onclick="toggleChannel('moderno','raw')"><span id="moderno-raw">( )</span> RAW</div>
-                <div class="selectable-node" onclick="toggleChannel('moderno','goog')"><span id="moderno-goog">(•)</span> GOOG</div>
-            </div>
-            <div>
-                <div>[RIJEKA]</div>
-                <div class="selectable-node" onclick="toggleChannel('rijeka','raw')"><span id="rijeka-raw">(•)</span> RAW</div>
-                <div class="selectable-node" onclick="toggleChannel('rijeka','goog')"><span id="rijeka-goog">( )</span> GOOG</div>
-            </div>
-            <div style="margin-left: auto; display: flex; flex-direction: column; justify-content: center; gap: 5px;">
-                <span class="selectable-node" onclick="globalOverride('all')">──► [ADD ALL]</span>
-                <span class="selectable-node" onclick="globalOverride('mute')">──► [MUTE ALL]</span>
-            </div>
-        </div>
+<body>
+ 
+<div id="cursor"></div>
+<div id="audio-vu"><div id="audio-vu-bar"></div></div>
+ 
+<div id="shell">
+ 
+    <!-- HEADER -->
+    <header id="header">
+        <div id="main-name">K.ari.n Schneider</div>
+        <button id="sys-btn" onclick="invertSystem()">Invert System</button>
     </header>
-
-    <div id="audio-prompt" onclick="activateSystem()">[ Initialize Electromagnetic Acoustic Matrix ]</div>
-    
-    <div id="ledger-container"></div>
-    
+ 
+    <!-- STATUS BAR -->
+    <div id="status-bar">[SIGNAL RECEPTOR IDLE] // AWAITING INITIALIZATION</div>
+ 
+    <!-- CONSOLE / SWITCHBOARD -->
+    <section id="console-zone">
+        <div id="console-header">
+            <span id="console-title">⬡ BIOSOUND CONSOLE — INSTITUTIONAL NETWORK ROUTER</span>
+            <span style="color:var(--dim)">CORS=AUDIBLE / RAW=LIVE / GOOG=CDN BYTES</span>
+        </div>
+ 
+        <!-- Master mode selectors -->
+        <div class="master-row">
+            <span class="master-label">MASTER:</span>
+            <span class="node" data-mode="raw" onclick="setMaster('raw')">
+                <span id="m-raw" class="dot on">(•)</span> RAW
+            </span>
+            <span class="node" data-mode="goog" onclick="setMaster('goog')">
+                <span id="m-goog" class="dot off">( )</span> GOOG
+            </span>
+            <span class="node" data-mode="mute" onclick="setMaster('mute')">
+                <span id="m-mute" class="dot off">( )</span> [MUTE]
+            </span>
+        </div>
+ 
+        <!-- Per-museum channels -->
+        <div id="museum-grid">
+            <!-- injected by JS -->
+        </div>
+ 
+        <div class="global-actions">
+            <span class="g-btn" onclick="globalOverride('all')">──► [OPEN ALL]</span>
+            <span class="g-btn" onclick="globalOverride('mute')">──► [CLOSE ALL]</span>
+        </div>
+    </section>
+ 
+    <!-- GATE OPERATORS (structural mutation) -->
+    <div id="gate-row">
+        <span class="gate-op" onclick="gateOp('scatter')" title="Scatter layout">◈ SCATTER</span>
+        <span class="gate-op" onclick="gateOp('stack')"   title="Stack columns">◧ STACK</span>
+        <span class="gate-op" onclick="gateOp('wide')"    title="Wide rows">◫ WIDE</span>
+        <span class="gate-op" onclick="gateOp('dense')"   title="Dense cells">⊞ DENSE</span>
+        <span class="gate-op" onclick="gateOp('reverse')" title="Reverse order">⇌ REVERSE</span>
+        <span class="gate-op" onclick="gateOp('shuffle')" title="Random reorder">⟳ SHUFFLE</span>
+        <span class="gate-op" onclick="gateOp('tall')"    title="Tall rows">⊟ TALL</span>
+    </div>
+ 
+    <!-- BOOT PROMPT -->
+    <div id="boot-prompt" onclick="boot()">
+        [ Initialize Electromagnetic Acoustic Matrix ]
+    </div>
+ 
+    <!-- LIVE LEDGER (log stream) -->
+    <div id="ledger"></div>
+ 
+    <!-- MAIN GRID -->
     <div id="grid-matrix"></div>
-    <div id="orbital-lens"></div>
-
-    <script>
-    let audioCtx = null;
-    let masterIsolationGain = null; 
-    let masterUserMode = 'raw';
-    let rawCsvText = ""; 
-    
-    // Live Endpoint Mappings: Targeting favicons for RAW and active tracking script mirrors for GOOG
-    let channelStates = {
-        whitney: { 
-            raw: true, goog: false, baseFreq: 55.0, type: 'sine', gainNode: null, osc: null, noiseGain: null, timerId: null,
-            rawUrl: 'https://whitney.org/favicon.ico', 
-            googUrl: 'https://www.google-analytics.com/analytics.js' 
-        },
-        pompidou: { 
-            raw: false, goog: true, baseFreq: 110.0, type: 'triangle', gainNode: null, osc: null, noiseGain: null, timerId: null,
-            rawUrl: 'https://www.centrepompidou.fr/images/favicon.ico', 
-            googUrl: 'https://www.googletagmanager.com/gtm.js'
-        },
-        sztuki: { 
-            raw: true, goog: false, baseFreq: 146.8, type: 'sawtooth', gainNode: null, osc: null, noiseGain: null, timerId: null,
-            rawUrl: 'https://msl.org.pl/favicon.ico', 
-            googUrl: 'https://www.google-analytics.com/ga.js'
-        },
-        momasp: { 
-            raw: false, goog: true, baseFreq: 220.0, type: 'triangle', gainNode: null, osc: null, noiseGain: null, timerId: null,
-            rawUrl: 'https://mam.org.br/favicon.ico', 
-            googUrl: 'https://www.google-analytics.com/analytics.js'
-        },
-        moderno: { 
-            raw: false, goog: true, baseFreq: 293.6, type: 'sine', gainNode: null, osc: null, noiseGain: null, timerId: null,
-            rawUrl: 'https://museomoderno.org/favicon.ico', 
-            googUrl: 'https://www.googletagmanager.com/gtag/js'
-        },
-        rijeka: { 
-            raw: true, goog: false, baseFreq: 440.0, type: 'sawtooth', gainNode: null, osc: null, noiseGain: null, timerId: null,
-            rawUrl: 'https://mmsu.hr/favicon.ico', 
-            googUrl: 'https://www.google-analytics.com/ga.js'
-        }
-    };
-
-    const matrixContainer = document.getElementById('grid-matrix');
-    const ledgerContainer = document.getElementById('ledger-container');
-    const lens = document.getElementById('orbital-lens');
-    let blockAudioNodes = []; 
-    let lastInteractionTime = Date.now();
-
-    function initializePureSystem() {
-        if (audioCtx) return;
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        masterIsolationGain = audioCtx.createGain();
-        masterIsolationGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-        masterIsolationGain.connect(audioCtx.destination);
-
-        buildLiveNetworkPipelines();
-    }
-
-    function buildLiveNetworkPipelines() {
-        Object.keys(channelStates).forEach((key) => {
-            const ch = channelStates[key];
-            
-            ch.gainNode = audioCtx.createGain();
-            ch.gainNode.gain.setValueAtTime(0.0, audioCtx.currentTime);
-            ch.gainNode.connect(masterIsolationGain);
-
-            // Route A: Primary Institutional Ground Wave
-            ch.osc = audioCtx.createOscillator();
-            ch.osc.type = ch.type;
-            ch.osc.frequency.setValueAtTime(ch.baseFreq, audioCtx.currentTime);
-            ch.osc.connect(ch.gainNode);
-            ch.osc.start();
-
-            // Route B: Dedicated Tracking Script Analytical Noise Channel
-            const bufferSize = audioCtx.sampleRate;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-            
-            const noiseSrc = audioCtx.createBufferSource();
-            noiseSrc.buffer = buffer;
-            noiseSrc.loop = true;
-
-            const bandpass = audioCtx.createBiquadFilter();
-            bandpass.type = 'bandpass';
-            bandpass.frequency.setValueAtTime(4500 + (ch.baseFreq * 10), audioCtx.currentTime);
-            bandpass.Q.setValueAtTime(15.0, audioCtx.currentTime);
-
-            ch.noiseGain = audioCtx.createGain();
-            ch.noiseGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-
-            noiseSrc.connect(bandpass);
-            bandpass.connect(ch.noiseGain);
-            ch.noiseGain.connect(ch.gainNode);
-            noiseSrc.start();
-
-            // Fire the Network Request Handshake Loop
-            const executeNetworkProbe = () => {
-                if (masterUserMode === 'mute') return;
-
-                const start = performance.now();
-                const wire = new Image();
-                
-                // Select live destination path based on console states
-                let liveTarget = (ch.raw && masterUserMode === 'raw') ? ch.rawUrl : ch.googUrl;
-                wire.src = liveTarget + "?nocache=" + start + Math.random();
-
-                const processTransactionTiming = () => {
-                    const latency = performance.now() - start;
-                    const dynamicJitter = Math.min(Math.max(latency % 35, 0), 35);
-
-                    if (!audioCtx) return;
-
-                    if (ch.raw && masterUserMode === 'raw') {
-                        let dynamicPitch = ch.baseFreq + (dynamicJitter * (ch.type === 'sawtooth' ? 1.4 : 0.4));
-                        ch.osc.frequency.setTargetAtTime(dynamicPitch, audioCtx.currentTime, 0.1);
-                        ch.noiseGain.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.04);
-                    } 
-                    else if (ch.goog && masterUserMode === 'goog') {
-                        let trackingHz = 4500 + (dynamicJitter * 250);
-                        bandpass.frequency.setValueAtTime(trackingHz, audioCtx.currentTime);
-                        ch.noiseGain.gain.setTargetAtTime(0.45, audioCtx.currentTime, 0.04);
-                    }
-                };
-
-                wire.onload = processTransactionTiming;
-                wire.onerror = processTransactionTiming;
-
-                // Non-synchronous loop rescheduling to avoid artificial periodicity
-                ch.timerId = setTimeout(executeNetworkProbe, 600 + Math.random() * 400);
-            };
-
-            executeNetworkProbe();
-        });
-        
-        updateAllAudioOutputs();
-    }
-
-    function toggleMasterUser(targetState) {
-        masterUserMode = targetState;
-        document.getElementById('m-raw').innerText = targetState === 'raw' ? '(•)' : '( )';
-        document.getElementById('m-goog').innerText = targetState === 'goog' ? '(•)' : '( )';
-        document.getElementById('m-mute').innerText = targetState === 'mute' ? '(•)' : '( )';
-        
-        updateAllAudioOutputs();
-    }
-
-    function toggleChannel(museum, type) {
-        channelStates[museum][type] = !channelStates[museum][type];
-        document.getElementById(`${museum}-${type}`).innerText = channelStates[museum][type] ? '(•)' : '( )';
-        
-        updateAllAudioOutputs();
-    }
-
-    function updateAllAudioOutputs() {
-        if (!audioCtx) return;
-
-        // HARD MUTE DISCONNECT: Completely cuts out terminal communication lines to prevent gain leak
-        if (masterUserMode === 'mute') {
-            masterIsolationGain.disconnect();
-            Object.keys(channelStates).forEach(k => {
-                if(channelStates[k].gainNode) channelStates[k].gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                if(channelStates[k].noiseGain) channelStates[k].noiseGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            });
-            return;
-        } else {
-            masterIsolationGain.connect(audioCtx.destination);
-        }
-
-        Object.keys(channelStates).forEach(k => {
-            const ch = channelStates[k];
-            if (!ch.gainNode) return;
-
-            let outputAmplitude = 0.0;
-            if (ch.raw && masterUserMode === 'raw') outputAmplitude = ch.type === 'sine' ? 0.06 : 0.007;
-            if (ch.goog && masterUserMode === 'goog') outputAmplitude = 0.014;
-
-            ch.gainNode.gain.setTargetAtTime(outputAmplitude, audioCtx.currentTime, 0.12);
-        });
-    }
-
-    function globalOverride(action) {
-        Object.keys(channelStates).forEach(m => {
-            if (action === 'all') {
-                channelStates[m].raw = true;
-                channelStates[m].goog = true;
-                document.getElementById(`${m}-raw`).innerText = '(•)';
-                document.getElementById(`${m}-goog`).innerText = '(•)';
-            } else if (action === 'mute') {
-                channelStates[m].raw = false;
-                channelStates[m].goog = false;
-                document.getElementById(`${m}-raw`).innerText = '( )';
-                document.getElementById(`${m}-goog`).innerText = '( )';
-            }
-        });
-        if (action === 'mute') masterUserMode = 'mute';
-        updateAllAudioOutputs();
-    }
-
-    function activateSystem() {
-        document.getElementById('audio-prompt').style.display = 'none';
-        initializePureSystem();
-        logTrack('HARDWARE', 'ROUTING MATRICES SECURED ON REAL INTERNET DESTINATIONS');
-        loadRepository();
-    }
-
-    function initializePolyphonicMatrix() {
-        blockAudioNodes = [];
-        document.querySelectorAll('.block').forEach((element, idx) => {
-            const mode = element.getAttribute('data-mode');
-            const gainNode = audioCtx.createGain();
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.connect(masterIsolationGain);
-
-            const oscillator = audioCtx.createOscillator();
-            oscillator.type = 'sine';
-            const baseFreq = mode === 'code' ? 1500 : 100 + (idx * 6);
-            oscillator.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
-            oscillator.connect(gainNode);
-            oscillator.start();
-
-            blockAudioNodes.push({ element, gainNode, oscillator, baseFreq });
-        });
-    }
-
-    function updateSpatialAudio(mouseX, mouseY) {
-        if (!audioCtx || masterUserMode === 'mute') return;
-        blockAudioNodes.forEach(node => {
-            const rect = node.element.getBoundingClientRect();
-            const blockCenterX = rect.left + rect.width / 2;
-            const blockCenterY = rect.top + rect.height / 2;
-            const distance = Math.hypot(mouseX - blockCenterX, mouseY - blockCenterY);
-            
-            if (distance < 110) {
-                const shiftDelta = (Math.random() - 0.5) * 3;
-                node.oscillator.frequency.setValueAtTime(node.baseFreq + shiftDelta, audioCtx.currentTime);
-                node.gainNode.gain.setTargetAtTime(0.002, audioCtx.currentTime, 0.05); 
-            } else {
-                node.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-            }
-        });
-    }
-
-    async function loadRepository() {
-        const response = await fetch('data.vcs');
-        rawCsvText = await response.text();
-        const lines = rawCsvText.trim().split('\n').slice(1);
-
-        const database = lines.map(line => {
-            const cols = line.split(',');
-            return {
-                year: (cols[0] || "").trim(),
-                mode: (cols[1] || "").trim(),
-                entry: (cols[2] || "").trim(),
-                context: (cols[3] || "").trim(),
-                venue: (cols[4] || "").trim(),
-                location: (cols[5] || "").trim()
-            };
-        });
-
-        const layouts = [
-            {col: "span 4", row: "span 2"}, {col: "span 5", row: "span 3"},
-            {col: "span 3", row: "span 2"}, {col: "span 5", row: "span 2"},
-            {col: "span 4", row: "span 3"}, {col: "span 3", row: "span 2"},
-            {col: "span 4", row: "span 2"}, {col: "span 5", row: "span 2"},
-            {col: "span 3", row: "span 3"}, {col: "span 6", row: "span 2"},
-            {col: "span 3", row: "span 2"}, {col: "span 3", row: "span 3"}
-        ];
-
-        matrixContainer.innerHTML = database.map((item, idx) => {
-            const layout = layouts[idx % layouts.length];
-            const rawType = item.mode.toLowerCase().trim();
-            let fileCategory = 'plus'; 
-
-            if (rawType === '+' || rawType === 'plus') fileCategory = 'plus';
-            else if (['solo', 'group', 'screening', 'performance', 'other'].includes(rawType)) fileCategory = 'shows';
-            else if (['press', 'publication', 'publications', 'editorial', 'essay', 'writing'].includes(rawType)) fileCategory = 'writing';
-            else if (['film', 'video', '16 mm', 'sound', 'multi', 'digital video', '4k'].includes(rawType)) fileCategory = 'time-based_media';
-            else if (rawType.includes('collect')) fileCategory = 'collection';
-            else if (rawType.includes('founding')) fileCategory = 'founding';
-            else if (rawType === 'code') fileCategory = 'code';
-
-            const cleanTitle = item.entry.replace(/[^a-zA-Z0-9]/g, "-");
-            const identityString = `${item.year}_${fileCategory.toUpperCase()}_${cleanTitle}`;
-            const imagePath = `images/${item.year}_${fileCategory}.jpg`;
-
-            return `
-                <div class="block" id="block-${idx}" style="grid-column: ${layout.col}; grid-row: ${layout.row};" 
-                     data-mode="${fileCategory}" data-text="${item.entry}" onclick="mutateSystem(this)">
-                    <canvas class="generative-canvas"></canvas>
-                    <img src="${imagePath}" class="asset-img" onload="this.classList.add('revealed')" onerror="this.style.display='none';">
-                    <div class="identity-label">${identityString}</div>
-                </div>
-            `;
-        }).join('');
-
-        initializeCanvases();
-        initializePolyphonicMatrix();
-        attachInteractions();
-    }
-
-    function initializeCanvases() {
-        document.querySelectorAll('.block').forEach(block => {
-            const canvas = block.querySelector('.generative-canvas');
-            const ctx = canvas.getContext('2d');
-            const textStr = block.getAttribute('data-text');
-            
-            const resizeCanvas = () => {
-                canvas.width = block.clientWidth;
-                canvas.height = block.clientHeight;
-                ctx.fillStyle = "rgba(120, 120, 120, 0.12)";
-                ctx.font = "9px monospace";
-                for(let i=0; i<3; i++) {
-                    ctx.fillText(textStr, Math.random() * (canvas.width - 60), Math.random() * canvas.height);
-                }
-            };
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
-        });
-    }
-
-    function attachInteractions() {
-        document.querySelectorAll('.block').forEach(block => {
-            const mode = block.getAttribute('data-mode');
-            const label = block.querySelector('.identity-label').innerText;
-
-            block.addEventListener('mouseenter', () => {
-                if (mode === 'time-based_media') { lens.style.width = '70px'; lens.style.height = '70px'; } 
-                else if (mode === 'code') { lens.style.width = '12px'; lens.style.height = '12px'; } 
-                else if (mode === 'plus') { lens.style.width = '55px'; lens.style.height = '55px'; } 
-                else { lens.style.width = '45px'; lens.style.height = '45px'; }
-                logTrack('BUS_READ', `DRIVE -> ${label}`);
-            });
-
-            block.addEventListener('mouseleave', () => {
-                lens.style.width = '30px'; lens.style.height = '30px';
-            });
-        });
-    }
-
-    // THE LINGUISTIC SWIFT INTERCEPT ENGINE
-    function mutateSystem(clickedBlock) {
-        if (!audioCtx || masterUserMode === 'mute') return;
-        
-        const textPayload = clickedBlock.getAttribute('data-text');
-        const stringWeight = textPayload.length;
-        
-        for (let i = matrixContainer.children.length; i >= 0; i--) {
-            matrixContainer.appendChild(matrixContainer.children[Math.random() * i | 0]);
-        }
-        
-        blockAudioNodes.forEach(node => {
-            let swiftCombFilter = masterUserMode === 'raw' ? (stringWeight * 2.2) : 110;
-            node.oscillator.frequency.setValueAtTime(node.baseFreq + swiftCombFilter, audioCtx.currentTime);
-            
-            node.gainNode.gain.setValueAtTime(0.012, audioCtx.currentTime);
-            node.gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04); 
-        });
-        
-        logTrack('SWIFT_COLLISION', `INGESTED BYTES: ${stringWeight} // DOCUMENT LAYER DYNAMIC`);
-    }
-
-    function logTrack(agent, detail) {
-        const time = new Date().toLocaleTimeString();
-        const logEntry = document.createElement('div');
-        logEntry.innerHTML = `[${time}] // ${agent} // ${detail}`;
-        ledgerContainer.appendChild(logEntry);
-        if (ledgerContainer.children.length > 4) {
-            ledgerContainer.removeChild(ledgerContainer.firstChild);
-        }
-    }
-
-    function toggleMode() { 
-        document.body.classList.toggle('dark-mode');
-        const titleElement = document.getElementById('main-name');
-        titleElement.innerText = document.body.classList.contains('dark-mode') ? "K.ari.n Schneider" : "KARIN SCHNEIDER";
-        logTrack('SYS_INVERT', 'POLARITY INVERSION EFFECTED');
-    }
-
-    window.addEventListener('mousemove', (e) => {
-        updateSpatialAudio(e.clientX, e.clientY);
-        
-        const now = Date.now();
-        const velocity = now - lastInteractionTime;
-        lastInteractionTime = now;
-        
-        const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-        const logField = document.getElementById('live-timestamp-log');
-        if (logField) {
-            logField.innerText = `[${timeStr}] // USER_ENTRY_DELTA // COORD: [X:${e.clientX}, Y:${e.clientY}] // VELOCITY: ${velocity}ms`;
-        }
-        
-        if (lens) {
-            lens.style.left = e.clientX + 'px';
-            lens.style.top = e.clientY + 'px';
-        }
+ 
+    <!-- RESUME LEDGER -->
+    <div id="resume-ledger">
+        <div class="r-header">
+            <span>DATA.VCS — EXPANDING LEDGER</span>
+            <span id="ledger-count" style="color:var(--dim)"></span>
+        </div>
+        <div id="resume-rows"></div>
+    </div>
+ 
+</div>
+ 
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   KARIN SCHNEIDER — BIOSOUND CONSOLE
+   Core principle: NO Math.random() or Math.sin() for sound content.
+   All sonic material derives from:
+     RAW  → true ms latency of live network probes (no modulo clamp)
+     GOOG → actual byte values of fetched CDN script payload
+     CLICK/TEXT → character codes + consonant cluster parsing of
+                  the exact clicked data.vcs string
+   CORS rejections → distinct audible event, logged as CORS agent
+   ═══════════════════════════════════════════════════════════════ */
+ 
+/* ── INSTITUTIONS ── */
+const MUSEUMS = {
+    whitney:  { label: 'WHITNEY',  raw: true,  goog: false, rawUrl: 'https://whitney.org/favicon.ico',                    googUrl: 'https://www.googletagmanager.com/gtm.js?id=GTM-WHITNEY' },
+    pompidou: { label: 'POMPIDOU', raw: false, goog: true,  rawUrl: 'https://www.centrepompidou.fr/favicon.ico',           googUrl: 'https://www.googletagmanager.com/gtm.js?id=GTM-POMPIDOU' },
+    sztuki:   { label: 'SZTUKI',   raw: true,  goog: false, rawUrl: 'https://msl.org.pl/favicon.ico',                     googUrl: 'https://www.google-analytics.com/analytics.js' },
+    momasp:   { label: 'MoMA SP',  raw: false, goog: true,  rawUrl: 'https://mam.org.br/favicon.ico',                     googUrl: 'https://www.googletagmanager.com/gtag/js?id=G-MOMA' },
+    moderno:  { label: 'MODERNO',  raw: false, goog: true,  rawUrl: 'https://museomoderno.org/favicon.ico',                googUrl: 'https://www.googletagmanager.com/gtag/js?id=G-MODERNO' },
+    rijeka:   { label: 'RIJEKA',   raw: true,  goog: false, rawUrl: 'https://mmsu.hr/favicon.ico',                        googUrl: 'https://www.google-analytics.com/ga.js' }
+};
+ 
+/* Base frequencies (Hz) */
+const BASE_FREQ = { whitney: 55, pompidou: 82.4, sztuki: 110, momasp: 164.8, moderno: 220, rijeka: 329.6 };
+ 
+/* Waveforms per channel */
+const WAVE_TYPE = { whitney: 'sine', pompidou: 'triangle', sztuki: 'sawtooth', momasp: 'triangle', moderno: 'sine', rijeka: 'sawtooth' };
+ 
+/* ── STATE ── */
+let audioCtx = null;
+let masterGain = null;
+let masterMode = 'raw';
+let rawCsvText = '';
+let channelNodes = {}; 
+let blockNodes   = []; 
+let corsProbeCache = {}; 
+let vuRafId = null;
+let googByteCache = {}; 
+let booted = false;
+let googTickInterval = null;
+ 
+/* ── CONSONANT CLUSTERS ── */
+const CONSONANT_CLUSTER_RE = /[bcdfghjklmnpqrstvwxyz]{2,}/gi;
+const VOWELS = new Set('aeiouAEIOU');
+ 
+/* ── DOM refs ── */
+const cursor      = document.getElementById('cursor');
+const statusBar   = document.getElementById('status-bar');
+const ledgerEl    = document.getElementById('ledger');
+const gridEl      = document.getElementById('grid-matrix');
+const resumeEl    = document.getElementById('resume-rows');
+const vuBar       = document.getElementById('audio-vu-bar');
+const bootPrompt  = document.getElementById('boot-prompt');
+ 
+/* ════════════════════════ CURSOR ════════════════════════ */
+document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top  = e.clientY + 'px';
+    const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    statusBar.innerHTML = `[${ts}] // NODE:USER // X:${e.clientX} Y:${e.clientY}`;
+});
+ 
+/* ════════════════════════ BOOT ════════════════════════ */
+async function boot() {
+    if (booted) return;
+    booted = true;
+    bootPrompt.classList.add('hidden');
+ 
+    audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    masterGain.connect(audioCtx.destination);
+ 
+    buildMuseumGrid();
+    buildChannelPipelines();
+    startVU();
+    log('SYS', 'ROUTING MATRICES ONLINE — TARGETING LIVE INSTITUTIONAL ENDPOINTS');
+ 
+    await loadVCS();
+}
+ 
+/* ════════════════════════ MUSEUM SWITCHBOARD UI ════════════════════════ */
+function buildMuseumGrid() {
+    const grid = document.getElementById('museum-grid');
+    grid.innerHTML = Object.entries(MUSEUMS).map(([id, m]) => `
+        <div class="museum-cell" id="cell-${id}">
+            <div class="museum-name">[${m.label}]
+                <span class="cors-badge" id="cors-${id}">CORS!</span>
+            </div>
+            <div class="channel-row">
+                <span class="ch-node" data-type="raw" onclick="toggleChannel('${id}','raw')">
+                    <span class="dot ${m.raw?'on':'off'}" id="${id}-raw">${m.raw?'(•)':'( )'}</span> RAW
+                </span>
+                <span class="ch-node" data-type="goog" onclick="toggleChannel('${id}','goog')">
+                    <span class="dot ${m.goog?'on':'off'}" id="${id}-goog">${m.goog?'(•)':'( )'}</span> GOOG
+                </span>
+            </div>
+        </div>
+    `).join('');
+}
+ 
+/* ════════════════════════ AUDIO PIPELINES ════════════════════════ */
+function buildChannelPipelines() {
+    Object.entries(MUSEUMS).forEach(([id, m]) => {
+        const chGain = audioCtx.createGain();
+        chGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        chGain.connect(masterGain);
+ 
+        /* RAW oscillator — driven by real latency */
+        const osc = audioCtx.createOscillator();
+        osc.type = WAVE_TYPE[id];
+        osc.frequency.setValueAtTime(BASE_FREQ[id], audioCtx.currentTime);
+        osc.connect(chGain);
+        osc.start();
+ 
+        /* GOOG grain player — driven by CDN byte values */
+        const googGain = audioCtx.createGain();
+        googGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        googGain.connect(chGain);
+ 
+        /* CORS event oscillator — fires specific pitch burst on rejection */
+        const corsOsc = audioCtx.createOscillator();
+        corsOsc.type = 'square';
+        corsOsc.frequency.setValueAtTime(3200, audioCtx.currentTime);
+        const corsEnv = audioCtx.createGain();
+        corsEnv.gain.setValueAtTime(0, audioCtx.currentTime);
+        corsOsc.connect(corsEnv);
+        corsEnv.connect(masterGain);
+        corsOsc.start();
+ 
+        channelNodes[id] = { chGain, osc, googGain, corsOsc, corsEnv, googGrainIdx: 0 };
+ 
+        startNetworkProbe(id);
     });
+ 
+    applyGains();
+}
+ 
+/* ─── RAW PROBE ─── */
+function startNetworkProbe(id) {
+    if (!audioCtx || masterMode === 'mute') {
+        scheduleProbe(id);
+        return;
+    }
+ 
+    const m  = MUSEUMS[id];
+    const url  = m.rawUrl + '?_=' + performance.now();
+    const t0   = performance.now();
+    const img  = new Image();
+ 
+    img.onload = () => {
+        handleRawResult(id, performance.now() - t0, false);
+        scheduleProbe(id);
+    };
+    img.onerror = () => {
+        handleRawResult(id, performance.now() - t0, true);
+        scheduleProbe(id);
+    };
+    img.src = url;
+}
+ 
+function scheduleProbe(id) {
+    const delay = 700 + (performance.now() % 400); 
+    setTimeout(() => startNetworkProbe(id), delay);
+}
+ 
+function handleRawResult(id, latencyMs, isCorsOrError) {
+    if (!audioCtx || masterMode !== 'raw') return;
+    const m  = MUSEUMS[id];
+    const cn = channelNodes[id];
+    if (!m.raw) return;
+ 
+    if (isCorsOrError) {
+        if (!corsProbeCache[id]) {
+            corsProbeCache[id] = true;
+            document.getElementById(`cors-${id}`).classList.add('show');
+            log('CORS', `BLOCK ← ${m.label} // latency:${latencyMs.toFixed(2)}ms // HANDSHAKE REJECTED`, 'cors');
+        }
+        const now = audioCtx.currentTime;
+        cn.corsEnv.gain.cancelScheduledValues(now);
+        cn.corsEnv.gain.setValueAtTime(0.04, now);
+        cn.corsEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+        return;
+    }
+ 
+    const rawHz = BASE_FREQ[id] + (latencyMs * 0.6);
+    cn.osc.frequency.setTargetAtTime(rawHz, audioCtx.currentTime, 0.08);
+ 
+    log('RAW', `${m.label} // ${latencyMs.toFixed(3)}ms → ${rawHz.toFixed(1)}Hz`, 'raw');
+    updateGainForChannel(id);
+}
+ 
+/* ─── GOOG ROUTE ─── */
+async function fetchGoogBytes(id) {
+    if (googByteCache[id]) return; 
+    const m = MUSEUMS[id];
+    try {
+        const res = await fetch(m.googUrl, { mode: 'no-cors', cache: 'no-store' });
+        googByteCache[id] = m.googUrl.split('').map(c => c.charCodeAt(0));
+        log('GOOG', `${MUSEUMS[id].label} // CDN OPAQUE — URL BYTES TRANSDUCED (${googByteCache[id].length}b)`, 'goog');
+    } catch (err) {
+        googByteCache[id] = (err.message || 'CORS').split('').map(c => c.charCodeAt(0));
+        log('CORS', `${MUSEUMS[id].label} // CDN BLOCKED — ERROR BYTES TRANSDUCED`, 'cors');
+        document.getElementById(`cors-${id}`).classList.add('show');
+    }
+}
+ 
+function tickGoogGrain(id) {
+    if (!audioCtx || masterMode !== 'goog') return;
+    const m  = MUSEUMS[id];
+    const cn = channelNodes[id];
+    if (!m.goog) return;
+    const bytes = googByteCache[id];
+    if (!bytes || bytes.length === 0) return;
+ 
+    const idx   = cn.googGrainIdx % bytes.length;
+    const byte  = bytes[idx];
+    cn.googGrainIdx++;
+ 
+    const hz = 200 + (byte / 255) * 7800;
+ 
+    const grainOsc = audioCtx.createOscillator();
+    grainOsc.type = 'sine';
+    grainOsc.frequency.setValueAtTime(hz, audioCtx.currentTime);
+ 
+    const grainEnv = audioCtx.createGain();
+    grainEnv.gain.setValueAtTime(0.018, audioCtx.currentTime);
+    grainEnv.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
+ 
+    grainOsc.connect(grainEnv);
+    grainEnv.connect(masterGain);
+    grainOsc.start();
+    grainOsc.stop(audioCtx.currentTime + 0.045);
+ 
+    log('GOOG', `${m.label} // BYTE[${idx}]=${byte} → ${hz.toFixed(0)}Hz`, 'goog');
+}
+ 
+function startGoogLoop() {
+    if (googTickInterval) return;
+    googTickInterval = setInterval(() => {
+        if (masterMode !== 'goog') return;
+        Object.keys(MUSEUMS).forEach(async id => {
+            if (!MUSEUMS[id].goog) return;
+            if (!googByteCache[id]) await fetchGoogBytes(id);
+            tickGoogGrain(id);
+        });
+    }, 55); 
+}
+ 
+/* ── GAINS ── */
+function applyGains() {
+    if (!audioCtx) return;
+    if (masterMode === 'mute') {
+        masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+        vuBar.style.background = 'var(--dim)';
+        if (googTickInterval) { clearInterval(googTickInterval); googTickInterval = null; }
+        return;
+    }
+    masterGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1);
+ 
+    Object.entries(MUSEUMS).forEach(([id, m]) => {
+        const cn = channelNodes[id];
+        if (!cn) return;
+        updateGainForChannel(id);
+    });
+ 
+    if (masterMode === 'goog') { 
+        startGoogLoop(); 
+        vuBar.style.background = 'var(--goog-color)'; 
+    } else { 
+        if (googTickInterval) { clearInterval(googTickInterval); googTickInterval = null; }
+        vuBar.style.background = 'var(--raw-color)'; 
+    }
+}
+ 
+function updateGainForChannel(id) {
+    if (!audioCtx) return;
+    const m  = MUSEUMS[id];
+    const cn = channelNodes[id];
+    if (!cn) return;
+ 
+    let amp = 0;
+    if (masterMode === 'raw'  && m.raw)  amp = WAVE_TYPE[id] === 'sine' ? 0.07 : 0.012;
+    if (masterMode === 'goog' && m.goog) amp = 0;  
+ 
+    cn.chGain.gain.setTargetAtTime(amp, audioCtx.currentTime, 0.12);
+}
+ 
+/* ════════════════════════ CONTROLS ════════════════════════ */
+function setMaster(mode) {
+    masterMode = mode;
+    ['raw','goog','mute'].forEach(k => {
+        const el = document.getElementById(`m-${k}`);
+        el.textContent = k === mode ? '(•)' : '( )';
+        el.className   = k === mode ? 'dot on' : 'dot off';
+    });
+    applyGains();
+    log('SYS', `MASTER ROUTE → ${mode.toUpperCase()}`);
+}
+ 
+function toggleChannel(id, type) {
+    MUSEUMS[id][type] = !MUSEUMS[id][type];
+    const el = document.getElementById(`${id}-${type}`);
+    el.textContent = MUSEUMS[id][type] ? '(•)' : '( )';
+    el.className   = 'dot ' + (MUSEUMS[id][type] ? 'on' : 'off');
+    applyGains();
+    if (type === 'goog' && MUSEUMS[id].goog) fetchGoogBytes(id);
+}
+ 
+function globalOverride(action) {
+    Object.entries(MUSEUMS).forEach(([id, m]) => {
+        if (action === 'all')  { m.raw = true; m.goog = true; }
+        if (action === 'mute') { m.raw = false; m.goog = false; }
+        ['raw','goog'].forEach(t => {
+            const el = document.getElementById(`${id}-${t}`);
+            if (el) { el.textContent = m[t] ? '(•)' : '( )'; el.className = 'dot ' + (m[t]?'on':'off'); }
+        });
+    });
+    if (action === 'all' && masterMode === 'goog') Object.keys(MUSEUMS).forEach(id => fetchGoogBytes(id));
+    applyGains();
+}
+ 
+/* ════════════════════════ GATE OPERATORS ════════════════════════ */
+const GATE_LAYOUTS = {
+    scatter: () => randomLayouts(),
+    stack:   () => stackLayouts(),
+    wide:    () => wideLayouts(),
+    dense:   () => denseLayouts(),
+    reverse: () => reverseBlocks(),
+    shuffle: () => shuffleBlocks(),
+    tall:    () => tallLayouts()
+};
+ 
+function gateOp(op) {
+    const btn = document.querySelector(`.gate-op[onclick="gateOp('${op}')"]`);
+    btn.classList.add('fired');
+    setTimeout(() => btn.classList.remove('fired'), 400);
+ 
+    GATE_LAYOUTS[op]?.();
+    log('GATE', `OPERATOR:${op.toUpperCase()} // LAYOUT SHELL MUTATED`);
+ 
+    playStringSound(op, 0.2);
+}
+ 
+function randomLayouts() {
+    const blocks = [...document.querySelectorAll('.block')];
+    const cols = [2,3,4,5,6];
+    const rows = [1,2,3];
+    blocks.forEach(b => {
+        b.style.gridColumn = `span ${cols[Math.floor(performance.now() * b.offsetLeft) % cols.length]}`;
+        b.style.gridRow    = `span ${rows[Math.floor(performance.now() * b.offsetTop) % rows.length]}`;
+    });
+}
+function stackLayouts() {
+    document.querySelectorAll('.block').forEach((b,i) => {
+        b.style.gridColumn = `span ${(i%3===0)?5:(i%3===1)?4:3}`;
+        b.style.gridRow    = 'span 2';
+    });
+}
+function wideLayouts() {
+    document.querySelectorAll('.block').forEach((b,i) => {
+        b.style.gridColumn = `span ${(i%2===0)?8:4}`;
+        b.style.gridRow    = 'span 1';
+    });
+}
+function denseLayouts() {
+    document.querySelectorAll('.block').forEach(b => {
+        b.style.gridColumn = 'span 2';
+        b.style.gridRow    = 'span 1';
+    });
+}
+function reverseBlocks() {
+    const grid = document.getElementById('grid-matrix');
+    const blocks = [...grid.children];
+    blocks.reverse().forEach(b => grid.appendChild(b));
+}
+function shuffleBlocks() {
+    const grid = document.getElementById('grid-matrix');
+    const blocks = [...grid.children];
+    const seed = performance.now() | 0;
+    for (let i = blocks.length - 1; i > 0; i--) {
+        const j = (seed * (i+1) * 2654435761 >>> 0) % (i+1);
+        grid.appendChild(blocks[j]);
+        blocks.splice(j, 1);
+    }
+}
+function tallLayouts() {
+    document.querySelectorAll('.block').forEach((b,i) => {
+        b.style.gridColumn = `span ${(i%4===0)?6:2}`;
+        b.style.gridRow    = `span ${(i%4===0)?1:3}`;
+    });
+}
+ 
+/* ════════════════════════ LINGUISTIC SOUND ENGINE ════════════════════════ */
+function playStringSound(str, globalGain = 1.0) {
+    if (!audioCtx || masterMode === 'mute') return;
+ 
+    const chars  = str.split('');
+    let timeHead = audioCtx.currentTime + 0.01;
+ 
+    const clusters = new Set();
+    let m;
+    const re = CONSONANT_CLUSTER_RE;
+    re.lastIndex = 0;
+    while ((m = re.exec(str)) !== null) {
+        for (let i = m.index; i < m.index + m[0].length; i++) clusters.add(i);
+    }
+ 
+    chars.forEach((ch, idx) => {
+        const code = ch.charCodeAt(0);
+        if (code < 32) return; 
+ 
+        if (ch === ',' || ch === ' ') {
+            timeHead += 0.025;
+            return;
+        }
+ 
+        const freq = 80 + ((code - 32) / 95) * 2720;
+ 
+        const isVowel    = VOWELS.has(ch);
+        const isCluster  = clusters.has(idx);
+        const duration   = isVowel ? 0.09 : isCluster ? 0.03 : 0.05;
+        const amp        = (isCluster ? 0.06 : isVowel ? 0.02 : 0.035) * globalGain;
+ 
+        const osc = audioCtx.createOscillator();
+        osc.type  = isCluster ? 'square' : 'sine';
+        osc.frequency.setValueAtTime(freq, timeHead);
+ 
+        const env = audioCtx.createGain();
+        env.gain.setValueAtTime(amp, timeHead);
+        env.gain.exponentialRampToValueAtTime(0.0001, timeHead + duration);
+ 
+        osc.connect(env);
+        env.connect(masterGain);
+        osc.start(timeHead);
+        osc.stop(timeHead + duration + 0.005);
+ 
+        timeHead += duration * 0.7; 
+    });
+ 
+    log('LING', `TRANSDUCED ${chars.length} CHARS → ${(timeHead - audioCtx.currentTime).toFixed(3)}s PHONETIC STREAM`);
+}
+ 
+/* ── Block click mutation ── */
+function mutateBlock(el) {
+    if (!audioCtx || masterMode === 'mute') return;
+ 
+    const txt = el.getAttribute('data-text') || '';
+ 
+    const blocks = [...document.getElementById('grid-matrix').children];
+    const pivot  = txt.length % blocks.length;
+    const before = blocks.slice(0, pivot);
+    const after  = blocks.slice(pivot);
+    [...after, ...before].forEach(b => gridEl.appendChild(b));
+ 
+    playStringSound(txt);
+ 
+    log('SWIFT', `CLICK NODE // "${txt.substring(0,40)}" // ${txt.length} BYTES TRANSDUCED`);
+    cursor.classList.add('active');
+    setTimeout(() => cursor.classList.remove('active'), 200);
+}
+ 
+/* ════════════════════════ VCS DATA LOADER ════════════════════════ */
+async function loadVCS() {
+    let lines = [];
+    try {
+        const res = await fetch('data.vcs');
+        rawCsvText = await res.text();
+        lines = rawCsvText.trim().split('\n').slice(1);
+        log('VCS', `REPOSITORY LOADED — ${lines.length} ENTRIES`);
+    } catch(e) {
+        log('VCS', 'data.vcs NOT FOUND — DEMO MODE');
+        rawCsvText = demoVCS();
+        lines = rawCsvText.trim().split('\n').slice(1);
+    }
+ 
+    const entries = lines.map(line => {
+        const c = line.split(',');
+        return {
+            year:     (c[0]||'').trim(),
+            mode:     (c[1]||'').trim(),
+            entry:    (c[2]||'').trim(),
+            context:  (c[3]||'').trim(),
+            venue:    (c[4]||'').trim(),
+            location: (c[5]||'').trim(),
+            raw: line
+        };
+    }).filter(e => e.year);
+ 
+    document.getElementById('ledger-count').textContent = `${entries.length} RECORDS`;
+    buildGrid(entries);
+    buildResume(entries);
+}
+ 
+function demoVCS() {
+    return `year,mode,entry,context,venue,location
+2024,solo,Structural Residue,Permanent Collection,Whitney Museum,New York
+2023,group,Liquid Architectures,Group Exhibition,Centre Pompidou,Paris
+2022,film,Passage Through,Screening,MoMA SP,São Paulo
+2021,solo,Index of Surfaces,Solo Show,Muzeum Sztuki,Łódź
+2020,performance,Threshold Frequency,Performance,Museo Moderno,Buenos Aires
+2019,group,Carrier Signal,Group Exhibition,MMSU,Rijeka
+2018,publication,On Network Topology,Essay,,
+2017,solo,Interference Pattern,Solo Show,Whitney Museum,New York
+2016,group,Surface Tension,Group Exhibition,Centre Pompidou,Paris`;
+}
+ 
+/* ════════════════════════ GRID BUILDER ════════════════════════ */
+const SPAN_PATTERNS = [
+    {col:'span 4',row:'span 2'},{col:'span 5',row:'span 3'},{col:'span 3',row:'span 2'},
+    {col:'span 5',row:'span 2'},{col:'span 4',row:'span 3'},{col:'span 3',row:'span 2'},
+    {col:'span 6',row:'span 2'},{col:'span 3',row:'span 3'},{col:'span 4',row:'span 2'},
+    {col:'span 5',row:'span 2'},{col:'span 3',row:'span 2'},{col:'span 4',row:'span 3'}
+];
+ 
+function catFromMode(raw) {
+    const m = raw.toLowerCase().trim();
+    if (['solo','group','screening','performance','other'].includes(m)) return 'shows';
+    if (['press','publication','publications','editorial','essay','writing'].includes(m)) return 'writing';
+    if (['film','video','16 mm','sound','multi','digital video','4k'].includes(m)) return 'time-based_media';
+    if (m.includes('collect')) return 'collection';
+    if (m.includes('founding')) return 'founding';
+    if (m === 'code') return 'code';
+    return 'plus';
+}
+ 
+function buildGrid(entries) {
+    gridEl.innerHTML = entries.map((e, idx) => {
+        const cat   = catFromMode(e.mode);
+        const span  = SPAN_PATTERNS[idx % SPAN_PATTERNS.length];
+        const label = `${e.year}_${cat.toUpperCase()}_${e.entry.replace(/[^a-zA-Z0-9]/g,'-')}`;
+        const img   = `images/${e.year}_${cat}.jpg`;
+ 
+        return `<div class="block" 
+            style="grid-column:${span.col};grid-row:${span.row}"
+            data-mode="${cat}" data-text="${e.raw.replace(/"/g,"'")}"
+            onclick="mutateBlock(this)">
+            <canvas class="block-canvas"></canvas>
+            <img class="block-img" src="${img}" onload="this.classList.add('vis')" onerror="this.style.display='none'">
+            <div class="block-label">${label}</div>
+        </div>`;
+    }).join('');
+ 
+    initCanvases();
+    initBlockHovers();
+}
+ 
+function initCanvases() {
+    document.querySelectorAll('.block').forEach(block => {
+        const canvas = block.querySelector('.block-canvas');
+        const ctx2d  = canvas.getContext('2d');
+        const txt    = block.getAttribute('data-text') || '';
+ 
+        const draw = () => {
+            canvas.width  = block.clientWidth;
+            canvas.height = block.clientHeight;
+            ctx2d.fillStyle = 'rgba(128,128,128,0.10)';
+            ctx2d.font = '8px monospace';
+            const chars = txt.split('');
+            chars.forEach((ch, i) => {
+                const code = ch.charCodeAt(0);
+                const x = (code * 37 + i * 13) % Math.max(canvas.width - 40, 1);
+                const y = (code * 17 + i * 7)  % Math.max(canvas.height - 4, 1);
+                ctx2d.fillText(ch, x, y + 8);
+            });
+        };
+        draw();
+        window.addEventListener('resize', draw);
+    });
+}
+ 
+function initBlockHovers() {
+    document.querySelectorAll('.block').forEach(block => {
+        block.addEventListener('mouseenter', () => {
+            const label = block.querySelector('.block-label').textContent;
+            log('BUS', `READ → ${label}`);
+        });
+    });
+}
+ 
+/* ════════════════════════ RESUME LEDGER ════════════════════════ */
+function buildResume(entries) {
+    resumeEl.innerHTML = entries.map(e => `
+        <div class="r-row">
+            <span class="r-year">${e.year}</span>
+            <span>${e.mode}</span>
+            <span>${e.entry}</span>
+            <span>${e.venue}</span>
+            <span>${e.location}</span>
+        </div>
+    `).join('');
+}
+ 
+/* ════════════════════════ VU METER ════════════════════════ */
+function startVU() {
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    masterGain.connect(analyser);
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+ 
+    function tick() {
+        analyser.getByteFrequencyData(buf);
+        let sum = 0;
+        for (let i=0; i<buf.length; i++) sum += buf[i];
+        const avg = sum / buf.length / 255;
+        vuBar.style.width = (avg * 100).toFixed(1) + '%';
+        vuRafId = requestAnimationFrame(tick);
+    }
+    tick();
+}
+ 
+/* ════════════════════════ LOG ════════════════════════ */
+function log(agent, detail, style = '') {
+    const ts   = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    const line = document.createElement('div');
+    line.className = 'ledger-line';
+    line.innerHTML = `<span class="ts">[${ts}]</span><span class="agent ${style}">${agent.padEnd(6)}</span><span class="detail">${detail}</span>`;
+    ledgerEl.appendChild(line);
+    if (ledgerEl.children.length > 6) ledgerEl.removeChild(ledgerEl.firstChild);
+    ledgerEl.scrollTop = ledgerEl.scrollHeight;
+}
+ 
+/* ════════════════════════ INVERT ════════════════════════ */
+function invertSystem() {
+    document.body.classList.toggle('light');
+    log('SYS', 'POLARITY INVERSION');
+}
 </script>
 </body>
 </html>
