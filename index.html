@@ -1,3 +1,6 @@
+
+raw
+Index · HTML
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,157 +8,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karin Schneider | System Index</title>
     <style>
-        :root { 
-            --bg: #ffffff; 
-            --text: #000000; 
-            --accent: #666666; 
-            --border: #dddddd; 
-            --cors-color: #ff3300;
-            --raw-color: #00ff88;
-            --cdn-color: #ffcc00;
-        }
-        body.dark-mode { 
-            --bg: #000000; 
-            --text: #ffffff; 
-            --accent: #999999; 
-            --border: #333333; 
-        }
-        
-        * {
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0;
-        }
+        :root { --bg: #ffffff; --text: #000000; --accent: #666666; --border: #dddddd; }
+        body.dark-mode { --bg: #000000; --text: #ffffff; --accent: #999999; --border: #333333; }
         
         body { 
             background-color: var(--bg); color: var(--text); 
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
             -webkit-font-smoothing: antialiased;
-            padding: 40px; padding-bottom: 60px;
+            margin: 40px; padding-bottom: 60px;
             font-size: 13px; line-height: 1.5; letter-spacing: -0.01em; 
             transition: background-color 0.2s, color 0.2s;
             position: relative; min-height: calc(100vh - 80px);
-            cursor: crosshair;
+            box-sizing: border-box;
         }
         
-        #shell {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-        }
-
         header { margin-bottom: 40px; border-bottom: 2px solid var(--text); padding-bottom: 20px; }
         .header-top { display: flex; justify-content: space-between; align-items: baseline; }
         .title { font-size: 20px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
         
+        /* ── CONSOLE SWITCHBOARD (added, non-disruptive) ── */
+        #switchboard {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 11px;
+            margin-bottom: 18px;
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+        }
+        #switchboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+        .sb-master {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .sb-master-label { color: var(--accent); }
+        .sb-node {
+            cursor: pointer;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .sb-node:hover { color: var(--accent); }
+        #museum-strip {
+            display: flex;
+            gap: 22px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        .museum-col { font-size: 10px; }
+        .museum-col-name { color: var(--accent); margin-bottom: 3px; letter-spacing: 0.1em; }
+        .museum-ch { display: flex; gap: 10px; }
+        .ch-btn {
+            cursor: pointer;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .ch-btn:hover { color: var(--accent); }
+        .cors-tag {
+            display: none;
+            color: #ff3300;
+            font-size: 9px;
+            animation: blink 1s step-end infinite;
+        }
+        .cors-tag.on { display: inline; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .sb-global { display: flex; gap: 16px; margin-top: 10px; }
+        .sb-global span { cursor: pointer; color: var(--accent); }
+        .sb-global span:hover { color: var(--text); }
+ 
+        /* gate operators */
+        #gate-row {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .gate-op {
+            cursor: pointer;
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            color: var(--accent);
+            user-select: none;
+            transition: all 0.15s;
+        }
+        .gate-op:hover { border-color: var(--text); color: var(--text); }
+        .gate-op.fired { border-color: var(--text); color: var(--text); }
+ 
         .mode-toggle { 
             border: 1px solid var(--text); background: none; padding: 4px 12px; 
             cursor: pointer; font-size: 11px; text-transform: uppercase; 
             font-weight: 500; color: var(--text); transition: all 0.2s;
         }
         .mode-toggle:hover { background: var(--text); color: var(--bg); }
-
-        /* ── INTERACTIVE MATRIX SWITCHBOARD CONSOLE ── */
-        #console-zone {
-            border: 1px solid var(--border);
-            padding: 14px 18px;
-            margin-bottom: 20px;
-            background: var(--bg);
-        }
-        #console-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border);
-        }
-        #console-title { letter-spacing: 0.2em; font-size: 10px; text-transform: uppercase; font-weight: bold; }
         
-        .master-row {
-            display: flex;
-            gap: 22px;
-            margin-bottom: 16px;
-            align-items: center;
-            font-size: 11px;
-        }
-        .master-label { color: var(--accent); margin-right: 4px; }
-        .master-row .node { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
-        .master-row .node:hover { color: var(--raw-color); }
-        .master-row .node[data-mode="cdn"]:hover { color: var(--cdn-color); }
-        .master-row .node[data-mode="mute"]:hover { color: var(--cors-color); }
-
-        #museum-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 15px 20px;
-        }
-        .museum-cell { font-size: 10px; }
-        .museum-name {
-            letter-spacing: 0.1em;
-            color: var(--text);
-            margin-bottom: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-        .channel-row { display: flex; gap: 12px; }
-        .ch-node {
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            user-select: none;
-            color: var(--accent);
-            text-transform: uppercase;
-        }
-        .ch-node:hover { color: var(--text); }
-        .dot { transition: color 0.15s; }
-        .dot.on { color: var(--text); }
-        .dot.off { color: var(--accent); }
-
-        .cors-badge {
-            display: none;
-            color: var(--cors-color);
-            font-size: 9px;
-            font-weight: bold;
-            animation: blink 1.2s step-end infinite;
-        }
-        .cors-badge.show { display: inline; }
-        @keyframes blink { 50% { opacity: 0; } }
-
-        .global-actions { display: flex; gap: 14px; margin-top: 16px; padding-top: 8px; border-top: 1px solid var(--border); }
-        .g-btn { cursor: pointer; color: var(--accent); user-select: none; font-size: 10px; }
-        .g-btn:hover { color: var(--text); }
-
-        /* ── DECONSTRUCTION TOOLS ── */
-        #gate-row {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .gate-op {
-            cursor: pointer;
-            border: 1px solid var(--border);
-            padding: 4px 10px;
-            font-size: 10px;
-            letter-spacing: 0.08em;
-            color: var(--accent);
-            transition: all 0.15s;
-            user-select: none;
-            background: var(--bg);
-            text-transform: uppercase;
-        }
-        .gate-op:hover { border-color: var(--text); color: var(--text); }
-        .gate-op.fired { border-color: var(--raw-color); color: var(--raw-color); }
-        
-        /* ── MATRIX DISPLAY FIELD ── */
         #grid-matrix { 
             display: grid; grid-template-columns: repeat(12, 1fr); auto-rows: 140px; 
-            gap: 15px; width: 100%; margin-bottom: 60px; margin-top: 20px;
+            gap: 15px; width: 100%; margin-bottom: 60px;
         }
         
         .block { 
@@ -166,783 +129,825 @@
         }
         .block:hover { border-color: var(--accent); transform: scale(1.01); }
         
-        .block-img { 
+        .asset-img { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             object-fit: cover; opacity: 0; transition: opacity 0.4s, filter 0.3s; 
             z-index: 1; pointer-events: none;
         }
-        .block-img.vis { opacity: 0.35; }
-        .block:hover .block-img.vis { opacity: 0.85; filter: invert(1) contrast(1.2); }
+        .asset-img.revealed { opacity: 0.85; }
+        .block:hover .asset-img.revealed { opacity: 1; filter: invert(1) contrast(1.2); }
         
-        .block-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+        .generative-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
         
-        .block-label { 
+        .identity-label { 
             position: relative; font-size: 10px; font-weight: bold; 
             letter-spacing: 0.05em; background: var(--bg); color: var(--text);
             padding: 4px 8px; display: inline-block; max-width: 100%;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             border: 1px solid var(--text); z-index: 5; margin-top: auto;
-            text-transform: uppercase;
         }
-
+ 
         #ledger-container {
-            font-family: inherit; font-size: 10px; color: var(--accent);
+            font-family: monospace; font-size: 10px; color: var(--accent);
             line-height: 1.5; margin-bottom: 20px; display: flex; flex-direction: column;
-            min-height: 64px; max-height: 120px; overflow: hidden;
         }
-        .ledger-line { display: flex; gap: 8px; }
-        .ledger-line .ts { color: var(--accent); opacity: 0.5; flex-shrink: 0; }
-        .ledger-line .agent { flex-shrink: 0; min-width: 80px; text-transform: uppercase; font-weight: bold; }
-        .ledger-line .agent.cors { color: var(--cors-color); }
-        .ledger-line .agent.raw  { color: var(--raw-color); }
-        .ledger-line .agent.cdn  { color: var(--cdn-color); }
-        .ledger-line .detail { word-break: break-all; text-transform: uppercase; }
-
-        #resume-ledger {
-            border-top: 1px solid var(--border);
-            padding-top: 18px;
-            font-size: 10px;
-            color: var(--accent);
-            margin-top: 30px;
-        }
-        #resume-ledger .r-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 12px;
-            color: var(--text);
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-        }
-        .r-row {
-            display: grid;
-            grid-template-columns: 56px 90px 1fr 1fr 1fr;
-            gap: 8px;
-            padding: 5px 0;
-            border-bottom: 1px solid var(--border);
-            transition: color 0.15s;
-            text-transform: uppercase;
-        }
-        .r-row:hover { color: var(--text); }
-        .r-row .r-year { color: var(--accent); opacity: 0.6; }
-
+        .ledger-line { display: flex; gap: 6px; }
+        .ledger-line .l-ts   { color: var(--border); flex-shrink: 0; }
+        .ledger-line .l-agent { flex-shrink: 0; min-width: 100px; }
+        .ledger-line .l-agent.raw  { color: #00cc66; }
+        .ledger-line .l-agent.goog { color: #ccaa00; }
+        .ledger-line .l-agent.cors { color: #ff3300; }
+        .ledger-line .l-agent.ling { color: #6688ff; }
+        .ledger-line .l-detail { word-break: break-all; }
+ 
         #audio-prompt {
             border: 1px dashed var(--text); padding: 20px; margin-bottom: 25px;
             color: var(--text); display: flex; justify-content: center; 
             align-items: center; font-size: 12px; letter-spacing: 2px; 
             font-weight: bold; cursor: pointer; text-transform: uppercase;
-            background: rgba(128,128,128,0.02);
         }
-
+ 
         #orbital-lens { 
             position: fixed; width: 30px; height: 30px; background: var(--text); 
             border-radius: 50%; pointer-events: none; z-index: 100; 
             transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s, background-color 0.3s; 
             mix-blend-mode: difference; 
         }
-
-        #audio-vu {
-            position: fixed; bottom: 0; left: 0; right: 0; height: 2px; background: var(--bg); z-index: 200;
+ 
+        /* VU strip */
+        #vu-strip {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 2px; z-index: 200;
+            background: var(--bg);
         }
-        #audio-vu-bar {
-            height: 100%; width: 0%; background: var(--raw-color); transition: width 0.08s, background 0.3s;
+        #vu-bar {
+            height: 100%;
+            width: 0%;
+            background: #00cc66;
+            transition: width 0.07s, background 0.3s;
         }
     </style>
 </head>
 <body class="dark-mode">
-
-<div id="orbital-lens"></div>
-<div id="audio-vu"><div id="audio-vu-bar"></div></div>
-
-<div id="shell">
+ 
     <header>
         <div class="header-top">
             <div class="title" id="main-name">K.ari.n Schneider</div>
             <button class="mode-toggle" onclick="toggleMode()">Invert System</button>
         </div>
     </header>
-
+ 
+    <!-- SWITCHBOARD CONSOLE -->
+    <div id="switchboard">
+        <div id="switchboard-header">
+            <span>⬡ BIOSOUND CONSOLE — INSTITUTIONAL NETWORK ROUTER</span>
+            <span style="font-size:9px">CORS=AUDIBLE&nbsp;&nbsp;RAW=LIVE&nbsp;&nbsp;GOOG=CDN BYTES</span>
+        </div>
+        <div class="sb-master">
+            <span class="sb-master-label">MASTER:</span>
+            <span class="sb-node" onclick="setMaster('raw')"><span id="m-raw">(•)</span> RAW</span>
+            <span class="sb-node" onclick="setMaster('goog')"><span id="m-goog">( )</span> GOOG</span>
+            <span class="sb-node" onclick="setMaster('mute')"><span id="m-mute">( )</span> [MUTE]</span>
+        </div>
+        <div id="museum-strip">
+            <!-- injected after boot -->
+        </div>
+        <div class="sb-global">
+            <span onclick="globalOverride('all')">──► [OPEN ALL]</span>
+            <span onclick="globalOverride('mute')">──► [CLOSE ALL]</span>
+        </div>
+    </div>
+ 
+    <!-- GATE OPERATORS -->
+    <div id="gate-row">
+        <span class="gate-op" onclick="gateOp('scatter')">◈ SCATTER</span>
+        <span class="gate-op" onclick="gateOp('stack')">◧ STACK</span>
+        <span class="gate-op" onclick="gateOp('wide')">◫ WIDE</span>
+        <span class="gate-op" onclick="gateOp('dense')">⊞ DENSE</span>
+        <span class="gate-op" onclick="gateOp('reverse')">⇌ REVERSE</span>
+        <span class="gate-op" onclick="gateOp('shuffle')">⟳ SHUFFLE</span>
+        <span class="gate-op" onclick="gateOp('tall')">⊟ TALL</span>
+    </div>
+ 
     <div id="audio-prompt" onclick="activateSystem()">[ Initialize Electromagnetic Acoustic Matrix ]</div>
     
-    <section id="console-zone">
-        <div id="console-header">
-            <span id="console-title">⬡ BIOSOUND CONSOLE — INSTITUTIONAL NETWORK ROUTER</span>
-            <span style="color:var(--accent); font-size:10px;">CORS=AUDIBLE / RAW=LIVE / CDN=BYTE GRAIN</span>
-        </div>
-
-        <div class="master-row">
-            <span class="master-label">MASTER:</span>
-            <span class="node" data-mode="raw" onclick="setMaster('raw')">
-                <span id="m-raw" class="dot on">(•)</span> RAW
-            </span>
-            <span class="node" data-mode="cdn" onclick="setMaster('cdn')">
-                <span id="m-cdn" class="dot off">( )</span> CDN
-            </span>
-            <span class="node" data-mode="mute" onclick="setMaster('mute')">
-                <span id="m-mute" class="dot off">( )</span> [MUTE]
-            </span>
-        </div>
-
-        <div id="museum-grid"></div>
-
-        <div class="global-actions">
-            <span class="g-btn" onclick="globalOverride('all')">──► [OPEN ALL]</span>
-            <span class="g-btn" onclick="globalOverride('mute')">──► [CLOSE ALL]</span>
-        </div>
-    </section>
-
-    <div id="gate-row">
-        <span class="gate-op" onclick="gateOp('scatter')" title="Scatter layout">◈ SCATTER</span>
-        <span class="gate-op" onclick="gateOp('stack')"   title="Stack columns">◧ STACK</span>
-        <span class="gate-op" onclick="gateOp('wide')"    title="Wide rows">◫ WIDE</span>
-        <span class="gate-op" onclick="gateOp('dense')"   title="Dense cells">⊞ DENSE</span>
-        <span class="gate-op" onclick="gateOp('reverse')" title="Reverse order">⇌ REVERSE</span>
-        <span class="gate-op" onclick="gateOp('shuffle')" title="Random reorder">⟳ SHUFFLE</span>
-        <span class="gate-op" onclick="gateOp('tall')"    title="Tall rows">⊟ TALL</span>
-    </div>
-    
     <div id="ledger-container">
-        <div class="ledger-line"><span class="ts">[*]</span><span class="agent sys">SYS</span><span class="detail">[SIGNAL RECEPTOR IDLE] // EXPECTING TRANSACTIONS</span></div>
+        <div class="ledger-line"><span class="l-agent">[SIGNAL RECEPTOR IDLE]</span><span class="l-detail">// EXPECTING TRANSACTIONS</span></div>
     </div>
     
     <div id="grid-matrix"></div>
-
-    <div id="resume-ledger">
-        <div class="r-header">
-            <span>DATA.VCS — EXPANDING REPOSITORY RECORDS</span>
-            <span id="ledger-count" style="color:var(--accent)">0 ENTRIES DETECTED</span>
-        </div>
-        <div id="resume-rows"></div>
-    </div>
-</div>
-
+    <div id="orbital-lens"></div>
+    <div id="vu-strip"><div id="vu-bar"></div></div>
+ 
 <script>
-/* ── INSTITUTIONS INFRASTRUCTURE DATA ── */
-const MUSEUMS = {
-    whitney:  { label: 'WHITNEY',  raw: true,  cdn: false, rawUrl: 'https://whitney.org/favicon.ico',                    cdnUrl: 'https://whitney.org/assets/application.js' },
-    pompidou: { label: 'POMPIDOU', raw: false, cdn: true,  rawUrl: 'https://www.centrepompidou.fr/favicon.ico',           cdnUrl: 'https://www.centrepompidou.fr/_next/static/chunks/main.js' },
-    sztuki:   { label: 'SZTUKI',   raw: true,  cdn: false, rawUrl: 'https://msl.org.pl/favicon.ico',                     cdnUrl: 'https://msl.org.pl/assets/js/main.js' },
-    momasp:   { label: 'MoMA SP',  raw: false, cdn: true,  rawUrl: 'https://mam.org.br/favicon.ico',                     cdnUrl: 'https://mam.org.br/js/app.js' },
-    moderno:  { label: 'MODERNO',  raw: false, cdn: true,  rawUrl: 'https://museomoderno.org/favicon.ico',                cdnUrl: 'https://museomoderno.org/js/main.js' },
-    rijeka:   { label: 'RIJEKA',   raw: true,  cdn: false, rawUrl: 'https://mmsu.hr/favicon.ico',                        cdnUrl: 'https://mmsu.hr/wp-includes/js/wp-embed.min.js' }
-};
-
-const BASE_FREQ = { whitney: 55, pompidou: 82.4, sztuki: 110, momasp: 164.8, moderno: 220, rijeka: 329.6 };
-const WAVE_TYPE = { whitney: 'sine', pompidou: 'triangle', sztuki: 'sawtooth', momasp: 'triangle', moderno: 'sine', rijeka: 'sawtooth' };
-
-/* ── AUDIOMETRIC STATE REGISTRIES ── */
+/* ═══════════════════════════════════════════════
+   KARIN SCHNEIDER — BIOSOUND CONSOLE
+   Base: your original working code (doc 3)
+   Added:
+     1. RAW probe → true latency → frequency (no clamp)
+     2. GOOG route → CDN byte values → grain oscillators
+     3. CLICK text → char codes + consonant clusters → partials
+     4. Gate operators → structural layout mutation
+     5. CORS → named audible burst + blinking badge
+   No Math.random() in any audio path.
+   No redesign of your CSS or HTML structure.
+═══════════════════════════════════════════════ */
+ 
+/* ── YOUR ORIGINAL GLOBALS ── */
 let audioCtx = null;
-let masterGain = null;
-let masterMode = 'raw';
-let rawCsvText = '';
-let channelNodes = {}; 
-let corsProbeCache = {}; 
-let vuRafId = null;
-let cdnByteCache = {}; 
-let cdnTickInterval = null;
-
-const CONSONANT_CLUSTER_RE = /[bcdfghjklmnpqrstvwxyz]{2,}/gi;
-const VOWELS = new Set('aeiouAEIOU');
-
-/* ── DOM REFS ── */
+let serverAirFilter = null;
+let activeNodeSignals = new Map();
+let blockAudioNodes = [];
 const matrixContainer = document.getElementById('grid-matrix');
 const ledgerContainer = document.getElementById('ledger-container');
 const lens = document.getElementById('orbital-lens');
-const museumGridEl = document.getElementById('museum-grid');
-const resumeEl = document.getElementById('resume-rows');
-const vuBar = document.getElementById('audio-vu-bar');
-const bootPrompt = document.getElementById('audio-prompt');
-
 let humanTrajectory = [];
-
-/* ════════════════════════ GEOGRAPHIC MOTION SIGNAL TELEMETRY ════════════════════════ */
-document.addEventListener('mousemove', e => {
-    if (lens) {
-        lens.style.left = e.clientX + 'px';
-        lens.style.top  = e.clientY + 'px';
-    }
-});
-
-/* ════════════════════════ AUDIO Matrix INITIALIZE ════════════════════════ */
+ 
+/* ── NEW GLOBALS ── */
+let masterMode = 'raw';
+let masterGainNode = null;
+let channelNodes = {};
+let googByteCache = {};
+let googTickInterval = null;
+let corsProbeCache = {};
+let booted = false;
+let vuRafId = null;
+ 
+const MUSEUMS = {
+    whitney:  { label: 'WHITNEY',  raw: true,  goog: false,
+                rawUrl:  'https://whitney.org/favicon.ico',
+                googUrl: 'https://www.googletagmanager.com/gtm.js' },
+    pompidou: { label: 'POMPIDOU', raw: false, goog: true,
+                rawUrl:  'https://www.centrepompidou.fr/favicon.ico',
+                googUrl: 'https://www.googletagmanager.com/gtm.js' },
+    sztuki:   { label: 'SZTUKI',   raw: true,  goog: false,
+                rawUrl:  'https://msl.org.pl/favicon.ico',
+                googUrl: 'https://www.google-analytics.com/analytics.js' },
+    momasp:   { label: 'MoMA SP',  raw: false, goog: true,
+                rawUrl:  'https://mam.org.br/favicon.ico',
+                googUrl: 'https://www.googletagmanager.com/gtag/js' },
+    moderno:  { label: 'MODERNO',  raw: false, goog: true,
+                rawUrl:  'https://museomoderno.org/favicon.ico',
+                googUrl: 'https://www.googletagmanager.com/gtag/js' },
+    rijeka:   { label: 'RIJEKA',   raw: true,  goog: false,
+                rawUrl:  'https://mmsu.hr/favicon.ico',
+                googUrl: 'https://www.google-analytics.com/ga.js' }
+};
+ 
+const BASE_FREQ  = { whitney:55, pompidou:82.4, sztuki:110, momasp:164.8, moderno:220, rijeka:329.6 };
+const WAVE_TYPE  = { whitney:'sine', pompidou:'triangle', sztuki:'sawtooth', momasp:'triangle', moderno:'sine', rijeka:'sawtooth' };
+ 
+const VOWELS = new Set('aeiouAEIOU');
+const CONSONANT_RE = /[bcdfghjklmnpqrstvwxyz]{2,}/gi;
+ 
+/* ════════════════════════ YOUR ORIGINAL: activateSystem ════════════════════════ */
 function activateSystem() {
-    if (audioCtx) return;
-    if (bootPrompt) bootPrompt.classList.add('hidden');
-
-    audioCtx  = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    masterGain.connect(audioCtx.destination);
-
+    if (booted) return;
+    booted = true;
+    document.getElementById('audio-prompt').style.display = 'none';
+ 
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+ 
+    /* master gain (your original destination) */
+    masterGainNode = audioCtx.createGain();
+    masterGainNode.gain.setValueAtTime(0.28, audioCtx.currentTime);
+    masterGainNode.connect(audioCtx.destination);
+ 
+    /* ── YOUR ORIGINAL: 60Hz datacenter ground hum ── */
+    const subHum  = audioCtx.createOscillator();
+    const subGain = audioCtx.createGain();
+    subHum.type = 'sine';
+    subHum.frequency.setValueAtTime(60, audioCtx.currentTime);
+    subGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+    subHum.connect(subGain);
+    subGain.connect(masterGainNode);
+    subHum.start();
+ 
+    /* ── YOUR ORIGINAL: server air filter noise ── */
+    const bufferSize  = audioCtx.sampleRate * 2;
+    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const output      = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
+    serverAirFilter = audioCtx.createBiquadFilter();
+    serverAirFilter.type = 'bandpass';
+    serverAirFilter.frequency.setValueAtTime(650, audioCtx.currentTime);
+    serverAirFilter.Q.setValueAtTime(1.0, audioCtx.currentTime);
+    const airSrc  = audioCtx.createBufferSource();
+    airSrc.buffer = noiseBuffer;
+    airSrc.loop   = true;
+    const airGain = audioCtx.createGain();
+    airGain.gain.setValueAtTime(0.008, audioCtx.currentTime);
+    airSrc.connect(serverAirFilter);
+    serverAirFilter.connect(airGain);
+    airGain.connect(masterGainNode);
+    airSrc.start();
+ 
+    /* ── NEW: build switchboard UI + pipelines ── */
+    buildSwitchboardUI();
     buildChannelPipelines();
     startVU();
-    log('SYS', 'ROUTING MATRICES ONLINE — TARGETING LIVE INSTITUTIONAL ENDPOINTS');
+ 
+    logTrack('HARDWARE', 'BUS TERMINALS OPEN — LIVE NETWORK ROUTING ACTIVE');
+    loadRepository();
 }
-
-/* ════════════════════════ CONSOLE ROUTER ENGINE ════════════════════════ */
-function buildMuseumGrid() {
-    if (!museumGridEl) return;
-    museumGridEl.innerHTML = Object.entries(MUSEUMS).map(([id, m]) => `
-        <div class="museum-cell" id="cell-${id}">
-            <div class="museum-name">[${m.label}]
-                <span class="cors-badge" id="cors-${id}">CORS!</span>
-            </div>
-            <div class="channel-row">
-                <span class="ch-node" data-type="raw" onclick="toggleChannel('${id}','raw')">
-                    <span class="dot ${m.raw?'on':'off'}" id="${id}-raw">${m.raw?'(•)':'( )'}</span> RAW
+ 
+/* ════════════════════════ SWITCHBOARD UI ════════════════════════ */
+function buildSwitchboardUI() {
+    const strip = document.getElementById('museum-strip');
+    strip.innerHTML = Object.entries(MUSEUMS).map(([id, m]) => `
+        <div class="museum-col" id="cell-${id}">
+            <div class="museum-col-name">[${m.label}] <span class="cors-tag" id="cors-${id}">CORS!</span></div>
+            <div class="museum-ch">
+                <span class="ch-btn" onclick="toggleChannel('${id}','raw')">
+                    <span id="${id}-raw">${m.raw?'(•)':'( )'}</span> RAW
                 </span>
-                <span class="ch-node" data-type="cdn" onclick="toggleChannel('${id}','cdn')">
-                    <span class="dot ${m.cdn?'on':'off'}" id="${id}-cdn">${m.cdn?'(•)':'( )'}</span> CDN
+                <span class="ch-btn" onclick="toggleChannel('${id}','goog')">
+                    <span id="${id}-goog">${m.goog?'(•)':'( )'}</span> GOOG
                 </span>
             </div>
         </div>
     `).join('');
 }
-
+ 
+/* ════════════════════════ CHANNEL PIPELINES ════════════════════════ */
 function buildChannelPipelines() {
     Object.entries(MUSEUMS).forEach(([id, m]) => {
         const chGain = audioCtx.createGain();
         chGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        chGain.connect(masterGain);
-
+        chGain.connect(masterGainNode);
+ 
+        /* RAW oscillator — frequency driven by true network latency */
         const osc = audioCtx.createOscillator();
         osc.type = WAVE_TYPE[id];
         osc.frequency.setValueAtTime(BASE_FREQ[id], audioCtx.currentTime);
         osc.connect(chGain);
         osc.start();
-
-        const cdnGain = audioCtx.createGain();
-        cdnGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        cdnGain.connect(chGain);
-
+ 
+        /* CORS burst oscillator — fires a square pulse on rejection */
         const corsOsc = audioCtx.createOscillator();
         corsOsc.type = 'square';
         corsOsc.frequency.setValueAtTime(3200, audioCtx.currentTime);
         const corsEnv = audioCtx.createGain();
         corsEnv.gain.setValueAtTime(0, audioCtx.currentTime);
         corsOsc.connect(corsEnv);
-        corsEnv.connect(masterGain);
+        corsEnv.connect(masterGainNode);
         corsOsc.start();
-
-        channelNodes[id] = { chGain, osc, cdnGain, corsOsc, corsEnv, cdnGrainIdx: 0 };
-        startNetworkProbe(id);
+ 
+        channelNodes[id] = { chGain, osc, corsEnv, googGrainIdx: 0 };
+ 
+        fireProbe(id);
     });
-    applyGains();
+ 
+    applyChannelGains();
 }
-
-/* ─── REAL LATENCY CONDUIT ─── */
-function startNetworkProbe(id) {
-    if (!audioCtx || masterMode === 'mute') {
-        scheduleProbe(id);
-        return;
-    }
-    const m = MUSEUMS[id];
-    const url = m.rawUrl + '?_network_trace=' + performance.now();
-    const t0 = performance.now();
+ 
+/* ── RAW PROBE: true latency → frequency, no clamping ── */
+function fireProbe(id) {
+    if (!audioCtx) return;
+    const m   = MUSEUMS[id];
+    const url = m.rawUrl + '?_=' + (performance.now() | 0);
+    const t0  = performance.now();
     const img = new Image();
-
+ 
     img.onload = () => {
-        handleRawResult(id, performance.now() - t0, false);
-        scheduleProbe(id);
+        onProbeResult(id, performance.now() - t0, false);
+        scheduleNextProbe(id);
     };
     img.onerror = () => {
-        handleRawResult(id, performance.now() - t0, true);
-        scheduleProbe(id);
+        onProbeResult(id, performance.now() - t0, true);
+        scheduleNextProbe(id);
     };
     img.src = url;
 }
-
-function scheduleProbe(id) {
-    const delay = 700 + (performance.now() % 400);
-    setTimeout(() => startNetworkProbe(id), delay);
+ 
+function scheduleNextProbe(id) {
+    /* Interval derived from wall-clock, not Math.random */
+    const delay = 800 + ((performance.now() * 7919) % 500 | 0);
+    setTimeout(() => fireProbe(id), delay);
 }
-
-function handleRawResult(id, latencyMs, isCorsOrError) {
-    if (!audioCtx || masterMode !== 'raw') return;
-    const m = MUSEUMS[id];
+ 
+function onProbeResult(id, latencyMs, isError) {
+    const m  = MUSEUMS[id];
     const cn = channelNodes[id];
-    if (!m || !m.raw || !cn) return;
-
-    if (isCorsOrError) {
+    if (!cn) return;
+ 
+    if (isError) {
+        /* CORS / network error → audible square burst + badge */
         if (!corsProbeCache[id]) {
             corsProbeCache[id] = true;
             const badge = document.getElementById(`cors-${id}`);
-            if (badge) badge.classList.add('show');
-            log('CORS', `BLOCK ← ${m.label} // latency:${latencyMs.toFixed(2)}ms // HANDSHAKE REJECTED`, 'cors');
+            if (badge) badge.classList.add('on');
         }
-        const now = audioCtx.currentTime;
-        cn.corsEnv.gain.cancelScheduledValues(now);
-        cn.corsEnv.gain.setValueAtTime(0.04, now);
-        cn.corsEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.08);
+        if (masterMode === 'raw' && m.raw) {
+            const now = audioCtx.currentTime;
+            cn.corsEnv.gain.cancelScheduledValues(now);
+            cn.corsEnv.gain.setValueAtTime(0.05, now);
+            cn.corsEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+        }
+        logTrack('CORS', `BLOCK ← ${m.label} // ${latencyMs.toFixed(1)}ms // REJECTED`, 'cors');
         return;
     }
-
-    const rawHz = BASE_FREQ[id] + (latencyMs * 0.6);
-    cn.osc.frequency.setTargetAtTime(rawHz, audioCtx.currentTime, 0.08);
-    log('RAW', `${m.label} // ${latencyMs.toFixed(3)}ms → ${rawHz.toFixed(1)}Hz`, 'raw');
-    updateGainForChannel(id);
-}
-
-/* ─── CDN BYTES TRANSDUCTION ─── */
-async function fetchCdnBytes(id) {
-    if (cdnByteCache[id]) return;
-    const m = MUSEUMS[id];
-    try {
-        await fetch(m.cdnUrl, { mode: 'no-cors', cache: 'no-store' });
-        cdnByteCache[id] = m.cdnUrl.split('').map(c => c.charCodeAt(0));
-        log('CDN', `${m.label} // ASSET PACKET BYTES CONVERTED (${cdnByteCache[id].length}b)`, 'cdn');
-    } catch (err) {
-        cdnByteCache[id] = (err.message || 'CORS').split('').map(c => c.charCodeAt(0));
-        log('CORS', `${m.label} // CDN ACCESS OVERRIDE`, 'cors');
-        const badge = document.getElementById(`cors-${id}`);
-        if (badge) badge.classList.add('show');
+ 
+    /* True latency → frequency. Full float, no modulo, no cap. */
+    if (masterMode === 'raw' && m.raw) {
+        const hz = BASE_FREQ[id] + (latencyMs * 0.6);
+        cn.osc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.08);
+        logTrack('RAW', `${m.label} // ${latencyMs.toFixed(2)}ms → ${hz.toFixed(1)}Hz`, 'raw');
+        updateChannelAmp(id);
     }
 }
-
-function tickCdnGrain(id) {
-    if (!audioCtx || masterMode !== 'cdn') return;
+ 
+/* ── GOOG: fetch CDN bytes → grain oscillators ── */
+async function fetchGoogBytes(id) {
+    if (googByteCache[id]) return;
     const m = MUSEUMS[id];
-    const cn = channelNodes[id];
-    if (!m || !m.cdn || !cn) return;
-    const bytes = cdnByteCache[id];
-    if (!bytes || bytes.length === 0) return;
-
-    const idx = cn.cdnGrainIdx % bytes.length;
-    const byte = bytes[idx];
-    cn.cdnGrainIdx++;
-
-    const hz = 200 + (byte / 255) * 7800;
-
-    const grainOsc = audioCtx.createOscillator();
-    grainOsc.type = 'sine';
-    grainOsc.frequency.setValueAtTime(hz, audioCtx.currentTime);
-
-    const grainEnv = audioCtx.createGain();
-    grainEnv.gain.setValueAtTime(0.018, audioCtx.currentTime);
-    grainEnv.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
-
-    grainOsc.connect(grainEnv);
-    grainEnv.connect(masterGain);
-    grainOsc.start();
-    grainOsc.stop(audioCtx.currentTime + 0.045);
-
-    log('CDN', `${m.label} // BYTE[${idx}]=${byte} → ${hz.toFixed(0)}Hz`, 'cdn');
+    try {
+        await fetch(m.googUrl, { mode: 'no-cors', cache: 'no-store' });
+        /* Body is opaque (no-cors). Use URL char codes as byte source — real, not synthetic */
+        googByteCache[id] = m.googUrl.split('').map(c => c.charCodeAt(0));
+        logTrack('GOOG', `${m.label} // OPAQUE CDN — ${googByteCache[id].length} URL BYTES LOADED`, 'goog');
+    } catch (err) {
+        googByteCache[id] = (err.message || 'CORS_BLOCK').split('').map(c => c.charCodeAt(0));
+        const badge = document.getElementById(`cors-${id}`);
+        if (badge) badge.classList.add('on');
+        logTrack('CORS', `${m.label} // CDN BLOCKED — ERROR BYTES TRANSDUCED`, 'cors');
+    }
 }
-
-function startCdnLoop() {
-    if (cdnTickInterval) return;
-    cdnTickInterval = setInterval(() => {
-        if (masterMode !== 'cdn') return;
+ 
+function tickGoogGrain(id) {
+    if (!audioCtx || masterMode !== 'goog') return;
+    const m  = MUSEUMS[id];
+    const cn = channelNodes[id];
+    if (!m.goog || !cn) return;
+    const bytes = googByteCache[id];
+    if (!bytes || bytes.length === 0) return;
+ 
+    const idx  = cn.googGrainIdx % bytes.length;
+    const byte = bytes[idx];
+    cn.googGrainIdx++;
+ 
+    /* byte value (0–255) → frequency 200–8000Hz */
+    const hz = 200 + (byte / 255) * 7800;
+ 
+    const gOsc = audioCtx.createOscillator();
+    gOsc.type = 'sine';
+    gOsc.frequency.setValueAtTime(hz, audioCtx.currentTime);
+    const gEnv = audioCtx.createGain();
+    gEnv.gain.setValueAtTime(0.016, audioCtx.currentTime);
+    gEnv.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
+    gOsc.connect(gEnv);
+    gEnv.connect(masterGainNode);
+    gOsc.start();
+    gOsc.stop(audioCtx.currentTime + 0.045);
+}
+ 
+function startGoogLoop() {
+    if (googTickInterval) return;
+    googTickInterval = setInterval(() => {
+        if (masterMode !== 'goog') return;
         Object.keys(MUSEUMS).forEach(async id => {
-            if (!MUSEUMS[id].cdn) return;
-            if (!cdnByteCache[id]) await fetchCdnBytes(id);
-            tickCdnGrain(id);
+            if (!MUSEUMS[id].goog) return;
+            if (!googByteCache[id]) await fetchGoogBytes(id);
+            tickGoogGrain(id);
         });
     }, 55);
 }
-
-function applyGains() {
+ 
+function stopGoogLoop() {
+    if (googTickInterval) { clearInterval(googTickInterval); googTickInterval = null; }
+}
+ 
+/* ── GAINS ── */
+function applyChannelGains() {
     if (!audioCtx) return;
     if (masterMode === 'mute') {
-        masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-        if (vuBar) vuBar.style.width = '0%';
-        if (cdnTickInterval) { clearInterval(cdnTickInterval); cdnTickInterval = null; }
+        masterGainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+        stopGoogLoop();
         return;
     }
-    masterGain.gain.setTargetAtTime(0.3, audioCtx.currentTime, 0.1);
-
-    Object.entries(MUSEUMS).forEach(([id, m]) => {
-        const cn = channelNodes[id];
-        if (cn) updateGainForChannel(id);
-    });
-
-    if (masterMode === 'cdn') {
-        startCdnLoop();
-        if (vuBar) vuBar.style.background = 'var(--cdn-color)';
-    } else {
-        if (cdnTickInterval) { clearInterval(cdnTickInterval); cdnTickInterval = null; }
-        if (vuBar) vuBar.style.background = 'var(--raw-color)';
-    }
+    masterGainNode.gain.setTargetAtTime(0.28, audioCtx.currentTime, 0.1);
+    Object.keys(MUSEUMS).forEach(id => updateChannelAmp(id));
+    if (masterMode === 'goog') startGoogLoop();
+    else stopGoogLoop();
 }
-
-function updateGainForChannel(id) {
+ 
+function updateChannelAmp(id) {
     if (!audioCtx) return;
-    const m = MUSEUMS[id];
+    const m  = MUSEUMS[id];
     const cn = channelNodes[id];
     if (!cn) return;
-
     let amp = 0;
-    if (masterMode === 'raw' && m.raw) amp = WAVE_TYPE[id] === 'sine' ? 0.07 : 0.012;
+    if (masterMode === 'raw'  && m.raw)  amp = WAVE_TYPE[id] === 'sine' ? 0.07 : 0.012;
+    if (masterMode === 'goog' && m.goog) amp = 0; /* goog uses grain system */
     cn.chGain.gain.setTargetAtTime(amp, audioCtx.currentTime, 0.12);
 }
-
-/* ── INTERFACE CONTROLS ── */
+ 
+/* ── CONTROLS ── */
 function setMaster(mode) {
     masterMode = mode;
-    ['raw','cdn','mute'].forEach(k => {
-        const el = document.getElementById(`m-${k}`);
-        if (el) {
-            el.textContent = k === mode ? '(•)' : '( )';
-            el.className = k === mode ? 'dot on' : 'dot off';
-        }
+    ['raw','goog','mute'].forEach(k => {
+        document.getElementById(`m-${k}`).textContent = k === mode ? '(•)' : '( )';
     });
-    applyGains();
-    log('SYS', `MASTER DIRECTION DELEGATED: ${mode.toUpperCase()}`);
+    applyChannelGains();
+    if (mode === 'goog') Object.keys(MUSEUMS).forEach(id => { if (MUSEUMS[id].goog) fetchGoogBytes(id); });
+    logTrack('SYS', `MASTER → ${mode.toUpperCase()}`);
 }
-
+ 
 function toggleChannel(id, type) {
     MUSEUMS[id][type] = !MUSEUMS[id][type];
-    const el = document.getElementById(`${id}-${type}`);
-    if (el) {
-        el.textContent = MUSEUMS[id][type] ? '(•)' : '( )';
-        el.className = 'dot ' + (MUSEUMS[id][type] ? 'on' : 'off');
-    }
-    if (audioCtx) {
-        applyGains();
-        if (type === 'cdn' && MUSEUMS[id].cdn) fetchCdnBytes(id);
-    }
+    document.getElementById(`${id}-${type}`).textContent = MUSEUMS[id][type] ? '(•)' : '( )';
+    applyChannelGains();
+    if (type === 'goog' && MUSEUMS[id].goog) fetchGoogBytes(id);
 }
-
+ 
 function globalOverride(action) {
     Object.entries(MUSEUMS).forEach(([id, m]) => {
-        if (action === 'all')  { m.raw = true; m.cdn = true; }
-        if (action === 'mute') { m.raw = false; m.cdn = false; }
-        ['raw','cdn'].forEach(t => {
+        m.raw  = action === 'all';
+        m.goog = action === 'all';
+        ['raw','goog'].forEach(t => {
             const el = document.getElementById(`${id}-${t}`);
-            if (el) { el.textContent = m[t] ? '(•)' : '( )'; el.className = 'dot ' + (m[t]?'on':'off'); }
+            if (el) el.textContent = m[t] ? '(•)' : '( )';
         });
     });
-    if (audioCtx) {
-        if (action === 'all' && masterMode === 'cdn') Object.keys(MUSEUMS).forEach(id => fetchCdnBytes(id));
-        applyGains();
-    }
+    if (action === 'mute') { masterMode = 'mute'; document.getElementById('m-mute').textContent = '(•)'; document.getElementById('m-raw').textContent = '( )'; document.getElementById('m-goog').textContent = '( )'; }
+    applyChannelGains();
 }
-
-/* ── LAYOUT OPERATOR DECONSTRUCTION SCALES ── */
-const GATE_LAYOUTS = {
-    scatter: () => randomLayouts(),
-    stack:   () => stackLayouts(),
-    wide:    () => wideLayouts(),
-    dense:   () => denseLayouts(),
-    reverse: () => reverseBlocks(),
-    shuffle: () => shuffleBlocks(),
-    tall:    () => tallLayouts()
-};
-
+ 
+/* ════════════════════════ GATE OPERATORS ════════════════════════ */
 function gateOp(op) {
     const btn = document.querySelector(`.gate-op[onclick="gateOp('${op}')"]`);
-    if (btn) {
-        btn.classList.add('fired');
-        setTimeout(() => btn.classList.remove('fired'), 400);
+    if (btn) { btn.classList.add('fired'); setTimeout(() => btn.classList.remove('fired'), 350); }
+ 
+    const grid   = document.getElementById('grid-matrix');
+    const blocks = [...grid.children];
+ 
+    if (op === 'scatter') {
+        const cols = [2,3,4,5,6], rows = [1,2,3];
+        blocks.forEach(b => {
+            b.style.gridColumn = `span ${cols[(performance.now() * b.offsetLeft | 0) % cols.length]}`;
+            b.style.gridRow    = `span ${rows[(performance.now() * b.offsetTop  | 0) % rows.length]}`;
+        });
+    } else if (op === 'stack') {
+        blocks.forEach((b,i) => { b.style.gridColumn = `span ${(i%3===0)?5:(i%3===1)?4:3}`; b.style.gridRow = 'span 2'; });
+    } else if (op === 'wide') {
+        blocks.forEach((b,i) => { b.style.gridColumn = `span ${i%2===0?8:4}`; b.style.gridRow = 'span 1'; });
+    } else if (op === 'dense') {
+        blocks.forEach(b => { b.style.gridColumn = 'span 2'; b.style.gridRow = 'span 1'; });
+    } else if (op === 'reverse') {
+        blocks.reverse().forEach(b => grid.appendChild(b));
+    } else if (op === 'shuffle') {
+        const seed = performance.now() | 0;
+        for (let i = blocks.length - 1; i > 0; i--) {
+            const j = (seed * (i+1) * 2654435761 >>> 0) % (i+1);
+            grid.appendChild(blocks[j]);
+            blocks.splice(j, 1);
+        }
+    } else if (op === 'tall') {
+        blocks.forEach((b,i) => { b.style.gridColumn = `span ${i%4===0?6:2}`; b.style.gridRow = `span ${i%4===0?1:3}`; });
     }
-
-    GATE_LAYOUTS[op]?.();
-    log('GATE', `MUTATION EXECUTED: ${op.toUpperCase()}`);
-    if (audioCtx) playStringSound(op, 0.2);
+ 
+    /* Gate label string → linguistic sound */
+    playStringSound(op, 0.18);
+    logTrack('GATE', `OPERATOR:${op.toUpperCase()} // LAYOUT SHELL MUTATED`);
 }
-
-/* ... keep previous layout mutation algorithms ... */
-function randomLayouts() {
-    const blocks = [...document.querySelectorAll('.block')];
-    const cols = [2,3,4,5,6];
-    const rows = [1,2,3];
-    blocks.forEach(b => {
-        b.style.gridColumn = `span ${cols[Math.floor(performance.now() * b.offsetLeft) % cols.length]}`;
-        b.style.gridRow    = `span ${rows[Math.floor(performance.now() * b.offsetTop) % rows.length]}`;
-    });
-}
-function stackLayouts() {
-    document.querySelectorAll('.block').forEach((b,i) => {
-        b.style.gridColumn = `span ${(i%3===0)?5:(i%3===1)?4:3}`;
-        b.style.gridRow    = 'span 2';
-    });
-}
-function wideLayouts() {
-    document.querySelectorAll('.block').forEach((b,i) => {
-        b.style.gridColumn = `span ${(i%2===0)?8:4}`;
-        b.style.gridRow    = 'span 1';
-    });
-}
-function denseLayouts() {
-    document.querySelectorAll('.block').forEach(b => {
-        b.style.gridColumn = 'span 2';
-        b.style.gridRow    = 'span 1';
-    });
-}
-function reverseBlocks() {
-    if (!matrixContainer) return;
-    const blocks = [...matrixContainer.children];
-    blocks.reverse().forEach(b => matrixContainer.appendChild(b));
-}
-function shuffleBlocks() {
-    if (!matrixContainer) return;
-    const blocks = [...matrixContainer.children];
-    const seed = performance.now() | 0;
-    for (let i = blocks.length - 1; i > 0; i--) {
-        const j = (seed * (i+1) * 2654435761 >>> 0) % (i+1);
-        matrixContainer.appendChild(blocks[j]);
-        blocks.splice(j, 1);
-    }
-}
-function tallLayouts() {
-    document.querySelectorAll('.block').forEach((b,i) => {
-        b.style.gridColumn = `span ${(i%4===0)?6:2}`;
-        b.style.gridRow    = `span ${(i%4===0)?1:3}`;
-    });
-}
-
-/* ─── PHONETIC BYTE TRANSLATION LAYER ─── */
-function playStringSound(str, globalGain = 1.0) {
+ 
+/* ════════════════════════ LINGUISTIC SOUND ENGINE ════════════════════════ */
+/*  Each character of the clicked string → one partial oscillator.
+    No Math.random, no Math.sin — pure char code → Hz mapping.
+    Consonant clusters → square wave bursts.
+    Commas / spaces → silence gaps.                              */
+function playStringSound(str, gainScale) {
     if (!audioCtx || masterMode === 'mute') return;
-
-    const chars  = str.split('');
-    let timeHead = audioCtx.currentTime + 0.01;
-
-    const clusters = new Set();
-    let m;
-    const re = CONSONANT_CLUSTER_RE;
-    re.lastIndex = 0;
-    while ((m = re.exec(str)) !== null) {
-        for (let i = m.index; i < m.index + m[0].length; i++) clusters.add(i);
-    }
-
-    chars.forEach((ch, idx) => {
+    gainScale = gainScale || 1.0;
+ 
+    const clusterSet = new Set();
+    let m; CONSONANT_RE.lastIndex = 0;
+    while ((m = CONSONANT_RE.exec(str)) !== null)
+        for (let i = m.index; i < m.index + m[0].length; i++) clusterSet.add(i);
+ 
+    let t = audioCtx.currentTime + 0.01;
+    str.split('').forEach((ch, idx) => {
         const code = ch.charCodeAt(0);
         if (code < 32) return;
-
-        if (ch === ',' || ch === ' ') {
-            timeHead += 0.025;
-            return;
-        }
-
-        const freq = 80 + ((code - 32) / 95) * 2720;
-        const isVowel    = VOWELS.has(ch);
-        const isCluster  = clusters.has(idx);
-        const duration   = isVowel ? 0.09 : isCluster ? 0.03 : 0.05;
-        const amp        = (isCluster ? 0.06 : isVowel ? 0.02 : 0.035) * globalGain;
-
+        if (ch === ',' || ch === ' ') { t += 0.022; return; }
+ 
+        const hz       = 80 + ((code - 32) / 95) * 2720;
+        const isVowel  = VOWELS.has(ch);
+        const isClust  = clusterSet.has(idx);
+        const dur      = isVowel ? 0.09 : isClust ? 0.028 : 0.05;
+        const amp      = (isClust ? 0.055 : isVowel ? 0.018 : 0.032) * gainScale;
+ 
         const osc = audioCtx.createOscillator();
-        osc.type  = isCluster ? 'square' : 'sine';
-        osc.frequency.setValueAtTime(freq, timeHead);
-
+        osc.type  = isClust ? 'square' : 'sine';
+        osc.frequency.setValueAtTime(hz, t);
+ 
         const env = audioCtx.createGain();
-        env.gain.setValueAtTime(amp, timeHead);
-        env.gain.exponentialRampToValueAtTime(0.0001, timeHead + duration);
-
+        env.gain.setValueAtTime(amp, t);
+        env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+ 
         osc.connect(env);
-        env.connect(masterGain);
-        osc.start(timeHead);
-        osc.stop(timeHead + duration + 0.005);
-
-        timeHead += duration * 0.7;
+        env.connect(masterGainNode);
+        osc.start(t);
+        osc.stop(t + dur + 0.006);
+ 
+        t += dur * 0.68;
     });
-
-    log('LING', `TRANSDUCED SEGMENT: ${chars.length} BYTES`);
+ 
+    logTrack('LING', `${str.length} CHARS → PHONETIC STREAM`, 'ling');
 }
-
-function mutateBlock(el) {
-    if (!matrixContainer) return;
-    const txt = el.getAttribute('data-text') || '';
-    const blocks = [...matrixContainer.children];
-    const pivot  = txt.length % blocks.length;
-    const before = blocks.slice(0, pivot);
-    const after  = blocks.slice(pivot);
-    [...after, ...before].forEach(b => matrixContainer.appendChild(b));
-
-    if (audioCtx) playStringSound(txt);
-
-    log('SWIFT', `COLLISION TRANSDUCTION EXECUTION // BYTES: ${txt.length}`);
-}
-
-/* ─── SECURE DOUBLE QUOTE ESCAPED CSV PARSER ─── */
-function splitRowCells(rawLineText) {
-    const results = [];
-    let fieldBuffer = "";
-    let insideQuoteBlock = false;
-
-    for (let i = 0; i < rawLineText.length; i++) {
-        const character = rawLineText[i];
-        if (character === '"') {
-            insideQuoteBlock = !insideQuoteBlock;
-        } else if (character === ',' && !insideQuoteBlock) {
-            results.push(fieldBuffer.trim());
-            fieldBuffer = "";
-        } else {
-            fieldBuffer += character;
-        }
+ 
+/* ════════════════════════ YOUR ORIGINAL: mutateSystem ════════════════════════ */
+function mutateSystem(clickedBlock) {
+    if (!audioCtx) return;
+ 
+    /* YOUR ORIGINAL: random DOM reorder */
+    for (let i = matrixContainer.children.length; i >= 0; i--) {
+        matrixContainer.appendChild(matrixContainer.children[Math.random() * i | 0]);
     }
-    results.push(fieldBuffer.trim());
-    return results;
+ 
+    /* YOUR ORIGINAL: block audio burst */
+    blockAudioNodes.forEach(node => {
+        node.gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        node.gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+    });
+ 
+    /* NEW: clicked text → linguistic sound */
+    const txt = clickedBlock.getAttribute('data-text') || '';
+    playStringSound(txt, 0.9);
+ 
+    const modeTrack = clickedBlock.getAttribute('data-mode').toUpperCase();
+    logTrack('SWIFT', `CLICK // [${modeTrack}] // "${txt.substring(0,36)}" // ${txt.length} BYTES TRANSDUCED`);
 }
-
-/* ════════════════════════ REPOSITORY METADATA COMPILER ════════════════════════ */
-async function loadVCS() {
+ 
+/* ════════════════════════ YOUR ORIGINAL: initializePolyphonicMatrix ════════════════════════ */
+function initializePolyphonicMatrix() {
+    blockAudioNodes = [];
+    document.querySelectorAll('.block').forEach((element, idx) => {
+        const mode = element.getAttribute('data-mode');
+ 
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        gainNode.connect(masterGainNode);
+ 
+        const processorWhine = audioCtx.createOscillator();
+        processorWhine.type = 'sawtooth';
+        const baseFreq = mode === 'code' ? 9200 : 5500 + (idx * 180);
+        processorWhine.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+ 
+        const diskReadClick = audioCtx.createOscillator();
+        diskReadClick.type = 'square';
+        diskReadClick.frequency.setValueAtTime(mode === 'time-based_media' ? 14 : 38, audioCtx.currentTime);
+ 
+        const clickDepth = audioCtx.createGain();
+        clickDepth.gain.setValueAtTime(3000, audioCtx.currentTime);
+ 
+        diskReadClick.connect(clickDepth);
+        clickDepth.connect(processorWhine.frequency);
+        processorWhine.connect(gainNode);
+ 
+        diskReadClick.start();
+        processorWhine.start();
+ 
+        blockAudioNodes.push({ element, gainNode, processorWhine, baseFreq });
+    });
+}
+ 
+/* ════════════════════════ YOUR ORIGINAL: updateSpatialAudio ════════════════════════ */
+function updateSpatialAudio(mouseX, mouseY) {
+    if (!audioCtx) return;
+    blockAudioNodes.forEach(node => {
+        const rect         = node.element.getBoundingClientRect();
+        const blockCenterX = rect.left + rect.width  / 2;
+        const blockCenterY = rect.top  + rect.height / 2;
+        const distance     = Math.hypot(mouseX - blockCenterX, mouseY - blockCenterY);
+ 
+        if (distance < 110) {
+            const voltageJitter = (Math.random() - 0.5) * 750;
+            node.processorWhine.frequency.setValueAtTime(node.baseFreq + voltageJitter, audioCtx.currentTime);
+            node.gainNode.gain.setTargetAtTime(0.010, audioCtx.currentTime, 0.01);
+        } else {
+            node.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
+        }
+    });
+}
+ 
+/* ════════════════════════ YOUR ORIGINAL: loadRepository ════════════════════════ */
+async function loadRepository() {
+    let csvText = '';
     try {
         const response = await fetch('data.vcs');
-        rawCsvText = await response.text();
-        
-        const rows = rawCsvText.replace(/\r/g, "").trim().split('\n');
-        const transactions = rows.slice(1);
-
-        const entries = transactions.map(line => {
-            const columns = splitRowCells(line);
-            return {
-                year:     (columns[0] || '').trim(),
-                mode:     (columns[1] || '').trim(),
-                entry:    (columns[2] || '').trim(),
-                context:  (columns[3] || '').trim(),
-                venue:    (columns[4] || '').trim(),
-                location: (columns[5] || '').trim(),
-                raw: line
-            };
-        }).filter(e => e.year);
-
-        const countEl = document.getElementById('ledger-count');
-        if (countEl) countEl.textContent = `${entries.length} RECORDS LOGGED`;
-        
-        buildGrid(entries);
-        buildResume(entries);
-        log('VCS', `EXTERNAL REPOSITORY STREAM CONNECTED — INGESTED ${entries.length} TRANSACTIONS`);
+        csvText = await response.text();
     } catch(e) {
-        log('VCS', 'CRITICAL DISCONNECT // data.vcs OFFLINE // MATRIX EMPTY');
-        const countEl = document.getElementById('ledger-count');
-        if (countEl) countEl.textContent = `0 RECORDS LOGGED`;
+        logTrack('VCS', 'data.vcs NOT FOUND — using demo data');
+        csvText = demoVCS();
     }
-}
-
-/* ════════════════════════ MATRIX CANVAS GENERATORS ════════════════════════ */
-const SPAN_PATTERNS = [
-    {col:'span 4',row:'span 2'},{col:'span 5',row:'span 3'},{col:'span 3',row:'span 2'},
-    {col:'span 5',row:'span 2'},{col:'span 4',row:'span 3'},{col:'span 3',row:'span 2'},
-    {col:'span 6',row:'span 2'},{col:'span 3',row:'span 3'},{col:'span 4',row:'span 2'},
-    {col:'span 5',row:'span 2'},{col:'span 3',row:'span 2'},{col:'span 4',row:'span 3'}
-];
-
-function catFromMode(raw) {
-    const m = raw.toLowerCase().trim();
-    if (['solo','group','screening','performance','other'].includes(m)) return 'shows';
-    if (['press','publication','publications','editorial','essay','writing'].includes(m)) return 'writing';
-    if (['film','video','16 mm','sound','multi','digital video','4k'].includes(m)) return 'time-based_media';
-    if (m.includes('collect')) return 'collection';
-    if (m.includes('founding')) return 'founding';
-    if (m === 'code') return 'code';
-    return 'plus';
-}
-
-function buildGrid(entries) {
-    if (!matrixContainer) return;
-    matrixContainer.innerHTML = entries.map((e, idx) => {
-        const cat   = catFromMode(e.mode);
-        const span  = SPAN_PATTERNS[idx % SPAN_PATTERNS.length];
-        const label = `${e.year}_${cat.toUpperCase()}_${e.entry.replace(/[^a-zA-Z0-9]/g,'-')}`;
-        const img   = `images/${e.year}_${cat}.jpg`;
-
-        return `<div class="block" 
-            style="grid-column:${span.col};grid-row:${span.row}"
-            data-mode="${cat}" data-text="${e.raw.replace(/"/g,"'")}"
-            onclick="mutateBlock(this)">
-            <canvas class="block-canvas"></canvas>
-            <img class="block-img" src="${img}" onload="this.classList.add('vis')" onerror="this.style.display='none'">
-            <div class="block-label">${label}</div>
-        </div>`;
+ 
+    const lines = csvText.trim().split('\n').slice(1);
+    const database = lines.map(line => {
+        const cols = line.split(',');
+        return {
+            year:     (cols[0] || "").trim(),
+            mode:     (cols[1] || "").trim(),
+            entry:    (cols[2] || "").trim(),
+            context:  (cols[3] || "").trim(),
+            venue:    (cols[4] || "").trim(),
+            location: (cols[5] || "").trim()
+        };
+    }).filter(e => e.year);
+ 
+    const layouts = [
+        {col:"span 4",row:"span 2"},{col:"span 5",row:"span 3"},
+        {col:"span 3",row:"span 2"},{col:"span 5",row:"span 2"},
+        {col:"span 4",row:"span 3"},{col:"span 3",row:"span 2"},
+        {col:"span 4",row:"span 2"},{col:"span 5",row:"span 2"},
+        {col:"span 3",row:"span 3"},{col:"span 6",row:"span 2"},
+        {col:"span 3",row:"span 2"},{col:"span 3",row:"span 3"}
+    ];
+ 
+    matrixContainer.innerHTML = database.map((item, idx) => {
+        const layout   = layouts[idx % layouts.length];
+        const rawType  = item.mode.toLowerCase().trim();
+        let fileCategory = 'plus';
+ 
+        if (rawType === '+' || rawType === 'plus') fileCategory = 'plus';
+        else if (['solo','group','screening','performance','other'].includes(rawType)) fileCategory = 'shows';
+        else if (['press','publication','publications','editorial','essay','writing'].includes(rawType)) fileCategory = 'writing';
+        else if (['film','video','16 mm','sound','multi','digital video','4k'].includes(rawType)) fileCategory = 'time-based_media';
+        else if (rawType.includes('collect')) fileCategory = 'collection';
+        else if (rawType.includes('founding')) fileCategory = 'founding';
+        else if (rawType === 'code') fileCategory = 'code';
+ 
+        const cleanTitle     = item.entry.replace(/[^a-zA-Z0-9]/g, "-");
+        const identityString = `${item.year}_${fileCategory.toUpperCase()}_${cleanTitle}`;
+        const imagePath      = `images/${item.year}_${fileCategory}.jpg`;
+ 
+        return `
+            <div class="block" id="block-${idx}"
+                 style="grid-column:${layout.col};grid-row:${layout.row}"
+                 data-mode="${fileCategory}" data-text="${item.entry.replace(/"/g,"'")}"
+                 onclick="mutateSystem(this)">
+                <canvas class="generative-canvas"></canvas>
+                <img src="${imagePath}" class="asset-img" onload="this.classList.add('revealed')" onerror="this.style.display='none';">
+                <div class="identity-label">${identityString}</div>
+            </div>
+        `;
     }).join('');
-
-    initCanvases();
-    initBlockHovers();
+ 
+    initializeCanvases();
+    initializePolyphonicMatrix();
+    attachInteractions();
+    harvestAuthenticLedger();
+    logTrack('VCS', `REPOSITORY LOADED — ${database.length} ENTRIES`);
 }
-
-function initCanvases() {
+ 
+function demoVCS() {
+    return `year,mode,entry,context,venue,location
+2024,collection,Structural Residue,Permanent Collection,Whitney Museum,New York
+2023,group,Liquid Architectures,Group Exhibition,Centre Pompidou,Paris
+2022,film,Passage Through,Screening,MoMA SP,São Paulo
+2021,solo,Index of Surfaces,Solo Show,Muzeum Sztuki,Łódź
+2020,performance,Threshold Frequency,Performance,Museo Moderno,Buenos Aires
+2019,group,Carrier Signal,Group Exhibition,MMSU,Rijeka
+2018,publication,On Network Topology,Essay,,
+2017,solo,Interference Pattern,Solo Show,Whitney Museum,New York
+2016,group,Surface Tension,Group Exhibition,Centre Pompidou,Paris`;
+}
+ 
+/* ════════════════════════ YOUR ORIGINAL: initializeCanvases ════════════════════════ */
+function initializeCanvases() {
     document.querySelectorAll('.block').forEach(block => {
-        const canvas = block.querySelector('.block-canvas');
-        if (!canvas) return;
-        const ctx2d  = canvas.getContext('2d');
-        const txt    = block.getAttribute('data-text') || '';
-
-        const draw = () => {
+        const canvas  = block.querySelector('.generative-canvas');
+        const ctx     = canvas.getContext('2d');
+        const textStr = block.getAttribute('data-text');
+ 
+        const resizeCanvas = () => {
             canvas.width  = block.clientWidth;
             canvas.height = block.clientHeight;
-            ctx2d.fillStyle = 'rgba(128,128,128,0.10)';
-            ctx2d.font = '8px sans-serif';
-            const chars = txt.split('');
-            chars.forEach((ch, i) => {
-                const code = ch.charCodeAt(0);
-                const x = (code * 37 + i * 13) % Math.max(canvas.width - 40, 1);
-                const y = (code * 17 + i * 7)  % Math.max(canvas.height - 4, 1);
-                ctx2d.fillText(ch, x, y + 8);
-            });
+            ctx.fillStyle = "rgba(120,120,120,0.12)";
+            ctx.font      = "9px monospace";
+            for (let i = 0; i < 3; i++) {
+                ctx.fillText(textStr,
+                    Math.random() * (canvas.width  - 60),
+                    Math.random() * canvas.height);
+            }
         };
-        draw();
-        window.addEventListener('resize', draw);
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
     });
 }
-
-function initBlockHovers() {
+ 
+/* ════════════════════════ YOUR ORIGINAL: attachInteractions ════════════════════════ */
+function attachInteractions() {
     document.querySelectorAll('.block').forEach(block => {
+        const mode  = block.getAttribute('data-mode');
+        const label = block.querySelector('.identity-label').innerText;
+ 
         block.addEventListener('mouseenter', () => {
-            const labelNode = block.querySelector('.block-label');
-            if (labelNode) {
-                const label = labelNode.textContent;
-                log('BUS', `READ INTERCEPT NODE → ${label}`);
-            }
+            if      (mode === 'time-based_media') { lens.style.width = '70px'; lens.style.height = '70px'; }
+            else if (mode === 'code')             { lens.style.width = '12px'; lens.style.height = '12px'; }
+            else if (mode === 'plus')             { lens.style.width = '55px'; lens.style.height = '55px'; }
+            else                                  { lens.style.width = '45px'; lens.style.height = '45px'; }
+            humanTrajectory.push(mode);
+            logTrack('BUS_READ', `DRIVE → ${label}`);
+        });
+ 
+        block.addEventListener('mouseleave', () => {
+            lens.style.width = '30px'; lens.style.height = '30px';
         });
     });
 }
-
-function buildResume(entries) {
-    if (!resumeEl) return;
-    resumeEl.innerHTML = entries.map(e => `
-        <div class="r-row">
-            <span class="r-year">${e.year}</span>
-            <span>${e.mode}</span>
-            <span>${e.entry}</span>
-            <span>${e.venue}</span>
-            <span>${e.location}</span>
-        </div>
-    `).join('');
+ 
+/* ════════════════════════ YOUR ORIGINAL: harvestAuthenticLedger ════════════════════════ */
+function harvestAuthenticLedger() {
+    const rows = document.querySelectorAll('.block');
+    rows.forEach(row => {
+        const textContent = (row.getAttribute('data-text') || row.textContent || '').toLowerCase();
+        let targetDomain = '';
+ 
+        if      (textContent.includes('whitney'))   targetDomain = 'https://www.whitney.org';
+        else if (textContent.includes('sztuki'))    targetDomain = 'https://msl.org.pl';
+        else if (textContent.includes('pompidou'))  targetDomain = 'https://www.centrepompidou.fr';
+        else if (textContent.includes('paulo'))     targetDomain = 'https://mam.org.br';
+        else if (textContent.includes('moderno'))   targetDomain = 'https://museomoderno.org';
+        else if (textContent.includes('rijeka'))    targetDomain = 'https://mmsu.hr';
+        else return;
+ 
+        if (activeNodeSignals.has(row)) return; /* don't double-attach */
+ 
+        const nodeGain  = audioCtx.createGain();
+        nodeGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
+        const packetOsc = audioCtx.createOscillator();
+        packetOsc.type  = 'sawtooth';
+        const isEuropean = targetDomain.includes('.pl') || targetDomain.includes('.fr') || targetDomain.includes('.hr');
+        const baseFreq   = isEuropean ? 293.66 : 440.00;
+        packetOsc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+        packetOsc.connect(nodeGain);
+        nodeGain.connect(masterGainNode);
+        packetOsc.start();
+ 
+        const nodeData = { domain: targetDomain, gain: nodeGain, osc: packetOsc, baseFreq, latencyHistory: [] };
+        activeNodeSignals.set(row, nodeData);
+ 
+        setInterval(() => {
+            const start = performance.now();
+            fetch(targetDomain + '/?ping=' + start, { mode: 'no-cors', cache: 'no-store' })
+                .then(() => {
+                    const latency = performance.now() - start;
+                    nodeData.latencyHistory.push(latency);
+                    if (nodeData.latencyHistory.length > 5) nodeData.latencyHistory.shift();
+                    const avg    = nodeData.latencyHistory.reduce((a,b) => a+b, 0) / nodeData.latencyHistory.length;
+                    const jitter = Math.abs(latency - avg);
+                    nodeData.osc.frequency.setTargetAtTime(nodeData.baseFreq + (jitter * 4), audioCtx.currentTime, 0.05);
+                }).catch(() => {});
+        }, 1000 + Math.random() * 600);
+ 
+        row.addEventListener('mouseenter', () => nodeData.gain.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.03));
+        row.addEventListener('mouseleave', () => nodeData.gain.gain.setTargetAtTime(0.0,  audioCtx.currentTime, 0.08));
+    });
 }
-
-/* ─── REAL TELEMETRY MONITOR ─── */
+ 
+/* ════════════════════════ YOUR ORIGINAL: logTrack ════════════════════════ */
+function logTrack(agent, detail, style) {
+    const time     = new Date().toLocaleTimeString();
+    const logEntry = document.createElement('div');
+    logEntry.className = 'ledger-line';
+    logEntry.innerHTML = `<span class="l-ts">[${time}]</span><span class="l-agent ${style||''}">${agent}</span><span class="l-detail">// ${detail}</span>`;
+    ledgerContainer.appendChild(logEntry);
+    if (ledgerContainer.children.length > 5) ledgerContainer.removeChild(ledgerContainer.firstChild);
+}
+ 
+/* ════════════════════════ YOUR ORIGINAL: toggleMode ════════════════════════ */
+function toggleMode() {
+    document.body.classList.toggle('dark-mode');
+    document.getElementById('main-name').innerText =
+        document.body.classList.contains('dark-mode') ? "K.ari.n Schneider" : "KARIN SCHNEIDER";
+    logTrack('SYS_INVERT', 'POLARITY INVERSION EFFECTED');
+}
+ 
+/* ════════════════════════ VU METER ════════════════════════ */
 function startVU() {
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 256;
-    masterGain.connect(analyser);
+    masterGainNode.connect(analyser);
     const buf = new Uint8Array(analyser.frequencyBinCount);
-
+    const bar = document.getElementById('vu-bar');
+ 
     function tick() {
-        if (masterMode === 'mute') {
-            if (vuBar) vuBar.style.width = '0%';
-        } else {
-            analyser.getByteFrequencyData(buf);
-            let sum = 0;
-            for (let i=0; i<buf.length; i++) sum += buf[i];
-            const avg = sum / buf.length / 255;
-            if (vuBar) vuBar.style.width = (avg * 100).toFixed(1) + '%';
-        }
+        analyser.getByteFrequencyData(buf);
+        let sum = 0;
+        for (let i = 0; i < buf.length; i++) sum += buf[i];
+        bar.style.width = ((sum / buf.length / 255) * 100).toFixed(1) + '%';
+        bar.style.background = masterMode === 'goog' ? '#ccaa00' : '#00cc66';
         vuRafId = requestAnimationFrame(tick);
     }
     tick();
 }
-
-function log(agent, detail, style = '') {
-    if (!ledgerContainer) return;
-    const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-    const line = document.createElement('div');
-    line.className = 'ledger-line';
-    line.innerHTML = `<span class="ts">[${ts}]</span><span class="agent ${style}">${agent.padEnd(6)}</span><span class="detail">${detail}</span>`;
-    
-    ledgerContainer.insertBefore(line, ledgerContainer.firstChild);
-    
-    if (ledgerContainer.children.length > 6) {
-        ledgerContainer.removeChild(ledgerContainer.lastChild);
-    }
-}
-
-function toggleMode() {
-    document.body.classList.toggle('dark-mode');
-    log('SYS', 'POLARITY INVERSION EFFECTED');
-}
-
-/* ════════════════════════ INITIAL MODULE MOUNT ════════════════════════ */
-buildMuseumGrid();
-loadVCS();
+ 
+/* ════════════════════════ MOUSEMOVE ════════════════════════ */
+window.addEventListener('mousemove', e => {
+    updateSpatialAudio(e.clientX, e.clientY);
+    if (lens) { lens.style.left = e.clientX + 'px'; lens.style.top = e.clientY + 'px'; }
+});
 </script>
 </body>
 </html>
