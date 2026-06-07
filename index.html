@@ -99,24 +99,335 @@
     <div id="grid-matrix"></div>
     <div id="orbital-lens"></div>
 
+    <!-- The Pure Institutional Network Transduction Matrix -->
     <script>
-        const matrixContainer = document.getElementById('grid-matrix');
-        const lens = document.getElementById('orbital-lens');
-        const ledgerContainer = document.getElementById('ledger-container');
-        
-        let audioCtx = null;
-        let blockAudioNodes = [];
-        let humanTrajectory = [];
+    let audioCtx = null;
+    let serverAirFilter = null;
+    let activeNodeSignals = new Map(); // Tracks live packet telemetry for your actual collection rows
+    let blockAudioNodes = []; // Tracks matrix blocks
+    const matrixContainer = document.getElementById('grid-matrix');
+    const ledgerContainer = document.getElementById('ledger-container');
+    const lens = document.getElementById('orbital-lens');
+    let humanTrajectory = [];
 
-        window.addEventListener('mousemove', (e) => {
-            lens.style.left = e.clientX + 'px';
-            lens.style.top = e.clientY + 'px';
+    // 1. Initialize the Native Host Datacenter Infrastructure
+    function initializePureSystem() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Low-end Datacenter Transformers: The native 60Hz ground wave of the host server
+        const subHum = audioCtx.createOscillator();
+        const subGain = audioCtx.createGain();
+        subHum.type = 'sine';
+        subHum.frequency.setValueAtTime(60, audioCtx.currentTime);
+        subGain.gain.setValueAtTime(0.02, audioCtx.currentTime); // Deep, non-intrusive weight
+        subHum.connect(subGain);
+        subGain.connect(audioCtx.destination);
+        subHum.start();
+
+        // Host Server Rack Air Shear (The physical space your code occupies)
+        const bufferSize = audioCtx.sampleRate * 2;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            output[i] = Math.random() * 2 - 1;
+        }
+        
+        serverAirFilter = audioCtx.createBiquadFilter();
+        serverAirFilter.type = 'bandpass';
+        serverAirFilter.frequency.setValueAtTime(650, audioCtx.currentTime); // Cold, hollow casing resonance
+        serverAirFilter.Q.setValueAtTime(1.0, audioCtx.currentTime);
+
+        const airNoiseSource = audioCtx.createBufferSource();
+        airNoiseSource.buffer = noiseBuffer;
+        airNoiseSource.loop = true;
+        
+        const airGain = audioCtx.createGain();
+        airGain.gain.setValueAtTime(0.008, audioCtx.currentTime); // The quiet, physical baseline of the room
+        
+        airNoiseSource.connect(serverAirFilter);
+        serverAirFilter.connect(airGain);
+        airGain.connect(audioCtx.destination);
+        airNoiseSource.start();
+
+        // Dynamically harvest only the authentic collection connections present on the screen
+        harvestAuthenticLedger();
+    }
+
+    // 2. Scrape whatever rows exist in your live visual database layout
+    function harvestAuthenticLedger() {
+        // Queries the live elements visible in your interface layout
+        const rows = document.querySelectorAll('table tr, .grid-row, .collection-list-item, .block'); 
+        
+        rows.forEach((row) => {
+            const textContent = row.textContent.toLowerCase() || (row.getAttribute('data-text') || "").toLowerCase();
+            let targetDomain = '';
+
+            // Route strictly to the domains that hold your work
+            if (textContent.includes('whitney')) targetDomain = 'https://www.whitney.org';
+            else if (textContent.includes('sztuki')) targetDomain = 'https://msl.org.pl';
+            else if (textContent.includes('pompidou')) targetDomain = 'https://www.centrepompidou.fr';
+            else if (textContent.includes('são paulo')) targetDomain = 'https://mam.org.br';
+            else if (textContent.includes('moderno')) targetDomain = 'https://museomoderno.org';
+            else if (textContent.includes('rijeka')) targetDomain = 'https://mmsu.hr';
+            else return; // Dynamically skips rows not matching your collection targets
+
+            // Create a unique electromagnetic coil signature for this specific institutional node
+            const nodeGain = audioCtx.createGain();
+            nodeGain.gain.setValueAtTime(0.0, audioCtx.currentTime); // Silent until grounded by the cursor
             
-            if (audioCtx && blockAudioNodes.length > 0) {
-                updateSpatialAudio(e.clientX, e.clientY);
+            const packetOsc = audioCtx.createOscillator();
+            packetOsc.type = 'sawtooth'; // Raw, unstable, linear silicon texture
+            
+            // Base frequency shifts by geographic network routing distance
+            const isEuropean = targetDomain.includes('.pl') || targetDomain.includes('.fr') || targetDomain.includes('.hr');
+            const baseFreq = isEuropean ? 293.66 : 440.00; // D4 vs A4 pitch markers
+            packetOsc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+            
+            packetOsc.connect(nodeGain);
+            nodeGain.connect(audioCtx.destination);
+            packetOsc.start();
+
+            const nodeData = { domain: targetDomain, gain: nodeGain, osc: packetOsc, baseFreq: baseFreq, latencyHistory: [] };
+            activeNodeSignals.set(row, nodeData);
+
+            // Continuous background telemetry harvesting: The daily global transaction cycle
+            setInterval(() => {
+                const start = performance.now();
+                fetch(targetDomain + '/?ping=' + start, { mode: 'no-cors', cache: 'no-store' })
+                    .then(() => {
+                        const latency = performance.now() - start;
+                        nodeData.latencyHistory.push(latency);
+                        if (nodeData.latencyHistory.length > 5) nodeData.latencyHistory.shift();
+                        
+                        const avgLatency = nodeData.latencyHistory.reduce((a, b) => a + b, 0) / nodeData.latencyHistory.length;
+                        const jitter = Math.abs(latency - avgLatency);
+                        
+                        // Modulate the specific node frequency by its live traffic jitter
+                        nodeData.osc.frequency.setTargetAtTime(nodeData.baseFreq + (jitter * 4), audioCtx.currentTime, 0.05);
+                    }).catch(() => {});
+            }, 1000 + Math.random() * 600); // Non-synchronous polling loops to preserve organic variance
+
+            // 3. The Short-Circuit Interaction Mechanics
+            row.addEventListener('mouseenter', () => {
+                nodeData.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.03);
+            });
+
+            row.addEventListener('mouseleave', () => {
+                nodeData.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.08);
+            });
+        });
+    }
+
+    function activateSystem() {
+        document.getElementById('audio-prompt').style.display = 'none';
+        initializePureSystem();
+        logTrack('HARDWARE', 'BUS TERMINALS OPEN');
+        loadRepository();
+    }
+
+    function initializePolyphonicMatrix() {
+        blockAudioNodes = [];
+        document.querySelectorAll('.block').forEach((element, idx) => {
+            const mode = element.getAttribute('data-mode');
+            
+            const gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.connect(audioCtx.destination);
+
+            const processorWhine = audioCtx.createOscillator();
+            processorWhine.type = 'sawtooth';
+            const baseFreq = mode === 'code' ? 9200 : 5500 + (idx * 180);
+            processorWhine.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+
+            const diskReadClick = audioCtx.createOscillator();
+            diskReadClick.type = 'square';
+            diskReadClick.frequency.setValueAtTime(mode === 'time-based_media' ? 14 : 38, audioCtx.currentTime);
+            
+            const clickDepth = audioCtx.createGain();
+            clickDepth.gain.setValueAtTime(3000, audioCtx.currentTime);
+
+            diskReadClick.connect(clickDepth);
+            clickDepth.connect(processorWhine.frequency);
+            processorWhine.connect(gainNode);
+            
+            diskReadClick.start();
+            processorWhine.start();
+
+            blockAudioNodes.push({ element, gainNode, processorWhine, baseFreq });
+        });
+    }
+
+    function updateSpatialAudio(mouseX, mouseY) {
+        if (!audioCtx) return;
+        blockAudioNodes.forEach(node => {
+            const rect = node.element.getBoundingClientRect();
+            const blockCenterX = rect.left + rect.width / 2;
+            const blockCenterY = rect.top + rect.height / 2;
+
+            const distance = Math.hypot(mouseX - blockCenterX, mouseY - blockCenterY);
+            
+            if (distance < 110) {
+                const voltageJitter = (Math.random() - 0.5) * 750;
+                node.processorWhine.frequency.setValueAtTime(node.baseFreq + voltageJitter, audioCtx.currentTime);
+                node.gainNode.gain.setTargetAtTime(0.010, audioCtx.currentTime, 0.01);
+            } else {
+                node.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
             }
         });
+    }
 
+    async function loadRepository() {
+        const response = await fetch('data.vcs');
+        const csvText = await response.text();
+        const lines = csvText.trim().split('\n').slice(1);
+
+        const database = lines.map(line => {
+            const cols = line.split(',');
+            return {
+                year: (cols[0] || "").trim(),
+                mode: (cols[1] || "").trim(),
+                entry: (cols[2] || "").trim(),
+                context: (cols[3] || "").trim(),
+                venue: (cols[4] || "").trim(),
+                location: (cols[5] || "").trim()
+            };
+        });
+
+        const layouts = [
+            {col: "span 4", row: "span 2"}, {col: "span 5", row: "span 3"},
+            {col: "span 3", row: "span 2"}, {col: "span 5", row: "span 2"},
+            {col: "span 4", row: "span 3"}, {col: "span 3", row: "span 2"},
+            {col: "span 4", row: "span 2"}, {col: "span 5", row: "span 2"},
+            {col: "span 3", row: "span 3"}, {col: "span 6", row: "span 2"},
+            {col: "span 3", row: "span 2"}, {col: "span 3", row: "span 3"}
+        ];
+
+        matrixContainer.innerHTML = database.map((item, idx) => {
+            const layout = layouts[idx % layouts.length];
+            const rawType = item.mode.toLowerCase().trim();
+            let fileCategory = 'plus'; 
+
+            if (rawType === '+' || rawType === 'plus') {
+                fileCategory = 'plus';
+            } else if (['solo', 'group', 'screening', 'performance', 'other'].includes(rawType)) {
+                fileCategory = 'shows';
+            } else if (['press', 'publication', 'publications', 'editorial', 'essay', 'writing'].includes(rawType)) {
+                fileCategory = 'writing';
+            } else if (['film', 'video', '16 mm', 'sound', 'multi', 'digital video', '4k'].includes(rawType)) {
+                fileCategory = 'time-based_media';
+            } else if (rawType.includes('collect')) {
+                fileCategory = 'collection';
+            } else if (rawType.includes('founding')) {
+                fileCategory = 'founding';
+            } else if (rawType === 'code') {
+                fileCategory = 'code';
+            }
+
+            const cleanTitle = item.entry.replace(/[^a-zA-Z0-9]/g, "-");
+            const identityString = `${item.year}_${fileCategory.toUpperCase()}_${cleanTitle}`;
+            const imagePath = `images/${item.year}_${fileCategory}.jpg`;
+
+            return `
+                <div class="block" id="block-${idx}" style="grid-column: ${layout.col}; grid-row: ${layout.row};" 
+                     data-mode="${fileCategory}" data-text="${item.entry}" onclick="mutateSystem(this)">
+                    <canvas class="generative-canvas"></canvas>
+                    <img src="${imagePath}" class="asset-img" onload="this.classList.add('revealed')" onerror="this.style.display='none';">
+                    <div class="identity-label">${identityString}</div>
+                </div>
+            `;
+        }).join('');
+
+        initializeCanvases();
+        initializePolyphonicMatrix();
+        attachInteractions();
+    }
+
+    function initializeCanvases() {
+        document.querySelectorAll('.block').forEach(block => {
+            const canvas = block.querySelector('.generative-canvas');
+            const ctx = canvas.getContext('2d');
+            const textStr = block.getAttribute('data-text');
+            
+            const resizeCanvas = () => {
+                canvas.width = block.clientWidth;
+                canvas.height = block.clientHeight;
+                ctx.fillStyle = "rgba(120, 120, 120, 0.12)";
+                ctx.font = "9px monospace";
+                for(let i=0; i<3; i++) {
+                    ctx.fillText(textStr, Math.random() * (canvas.width - 60), Math.random() * canvas.height);
+                }
+            };
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+        });
+    }
+
+    function attachInteractions() {
+        document.querySelectorAll('.block').forEach(block => {
+            const mode = block.getAttribute('data-mode');
+            const label = block.querySelector('.identity-label').innerText;
+
+            block.addEventListener('mouseenter', () => {
+                if (mode === 'time-based_media') { lens.style.width = '70px'; lens.style.height = '70px'; } 
+                else if (mode === 'code') { lens.style.width = '12px'; lens.style.height = '12px'; } 
+                else if (mode === 'plus') { lens.style.width = '55px'; lens.style.height = '55px'; } 
+                else { lens.style.width = '45px'; lens.style.height = '45px'; }
+                humanTrajectory.push(mode);
+                logTrack('BUS_READ', `DRIVE -> ${label}`);
+            });
+
+            block.addEventListener('mouseleave', () => {
+                lens.style.width = '30px'; lens.style.height = '30px';
+            });
+        });
+
+        // Re-harvest newly generated DOM elements for the live transaction pipelines
+        harvestAuthenticLedger();
+    }
+
+    function mutateSystem(clickedBlock) {
+        for (let i = matrixContainer.children.length; i >= 0; i--) {
+            matrixContainer.appendChild(matrixContainer.children[Math.random() * i | 0]);
+        }
+        blockAudioNodes.forEach(node => {
+            node.gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
+            node.gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+        });
+        const modeTrack = clickedBlock.getAttribute('data-mode').toUpperCase();
+        logTrack('HARDWARE_MUTATE', `SECTOR RESET // TARGET [${modeTrack}]`);
+    }
+
+    function logTrack(agent, detail) {
+        const time = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.innerHTML = `[${time}] // ${agent} // ${detail}`;
+        ledgerContainer.appendChild(logEntry);
+        if (ledgerContainer.children.length > 4) {
+            ledgerContainer.removeChild(ledgerContainer.firstChild);
+        }
+    }
+
+    function toggleMode() { 
+        document.body.classList.toggle('dark-mode');
+        const titleElement = document.getElementById('main-name');
+        if (document.body.classList.contains('dark-mode')) {
+            titleElement.innerText = "K.ari.n Schneider";
+        } else {
+            titleElement.innerText = "KARIN SCHNEIDER";
+        }
+        logTrack('SYS_INVERT', 'POLARITY INVERSION EFFECTED');
+    }
+
+    // Capture global human trajectory to fuel the spatial audio shifts
+    window.addEventListener('mousemove', (e) => {
+        updateSpatialAudio(e.clientX, e.clientY);
+        if (lens) {
+            lens.style.left = e.clientX + 'px';
+            lens.style.top = e.clientY + 'px';
+        }
+    });
+</script>
         function activateSystem() {
             document.getElementById('audio-prompt').style.display = 'none';
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
