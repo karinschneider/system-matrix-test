@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Karin Schneider | System Index</title>
+    <style>
+        :root { --bg: #ffffff; --text: #000000; --accent: #666666; --border: #dddddd; }
+        body.dark-mode { --bg: #000000; --text: #ffffff; --accent: #999999; --border: #333333; }
+        
+        body { 
+            background-color: var(--bg); color: var(--text); 
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            margin: 40px; padding-bottom: 60px;
+            font-size: 13px; line-height: 1.5; letter-spacing: -0.01em; 
+            transition: background-color 0.2s, color 0.2s;
+            position: relative; min-height: calc(100vh - 80px);
+            box-sizing: border-box;
+        }
+        
+        header { margin-bottom: 40px; border-bottom: 2px solid var(--text); padding-bottom: 20px; }
+        .header-top { display: flex; justify-content: space-between; align-items: baseline; }
+        .title { font-size: 20px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
+        
+        .mode-toggle { 
+            border: 1px solid var(--text); background: none; padding: 4px 12px; 
+            cursor: pointer; font-size: 11px; text-transform: uppercase; 
+            font-weight: 500; color: var(--text); transition: all 0.2s;
+        }
+        .mode-toggle:hover { background: var(--text); color: var(--bg); }
+        
+        #grid-matrix { 
+            display: grid; grid-template-columns: repeat(12, 1fr); auto-rows: 140px; 
+            gap: 15px; width: 100%; margin-bottom: 60px;
+        }
+        
+        .block { 
+            border: 1px solid var(--text); position: relative; 
+            display: flex; flex-direction: column; justify-content: flex-end; 
+            padding: 15px; cursor: pointer; overflow: hidden; background: var(--bg);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s;
+        }
+        .block:hover { border-color: var(--accent); transform: scale(1.01); }
+        
+        .asset-img { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            object-fit: cover; opacity: 0; transition: opacity 0.4s, filter 0.3s; 
+            z-index: 1; pointer-events: none;
+        }
+        .asset-img.revealed { opacity: 0.85; }
+        .block:hover .asset-img.revealed { opacity: 1; filter: invert(1) contrast(1.2); }
+        
+        .generative-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+        
+        .identity-label { 
+            position: relative; font-size: 10px; font-weight: bold; 
+            letter-spacing: 0.05em; background: var(--bg); color: var(--text);
+            padding: 4px 8px; display: inline-block; max-width: 100%;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            border: 1px solid var(--text); z-index: 5; margin-top: auto;
+        }
+
+        #ledger-container {
+            font-family: monospace; font-size: 10px; color: var(--accent);
+            line-height: 1.5; margin-bottom: 20px; display: flex; flex-direction: column;
+        }
+
+        #audio-prompt {
+            border: 1px dashed var(--text); padding: 20px; margin-bottom: 25px;
+            color: var(--text); display: flex; justify-content: center; 
+            align-items: center; font-size: 12px; letter-spacing: 2px; 
+            font-weight: bold; cursor: pointer; text-transform: uppercase;
+        }
+
+        #orbital-lens { 
+            position: fixed; width: 30px; height: 30px; background: var(--text); 
+            border-radius: 50%; pointer-events: none; z-index: 100; 
+            transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s, background-color 0.3s; 
+            mix-blend-mode: difference; 
+        }
+
+        footer { 
+            position: relative; width: 100%; margin-top: 60px;
+            border-top: 1px solid var(--border); padding-top: 20px;
+            font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+
+    <header>
+        <div class="header-top">
+            <div class="title" id="main-name">K.ari.n Schneider</div>
+            <button class="mode-toggle" onclick="toggleMode()">Invert System</button>
+        </div>
+    </header>
+
+    <div id="audio-prompt" onclick="activateSystem()">[ Click to Initialize Spatial Harmonic Matrix ]</div>
+    
+    <div id="ledger-container">
+        <div>[SYSTEM INITIALIZED] // POLYPHONIC HARMONIC FIELD LIVE</div>
+    </div>
+    
+    <div id="grid-matrix"></div>
+    <div id="orbital-lens"></div>
+
+    <script>
+        const matrixContainer = document.getElementById('grid-matrix');
+        const lens = document.getElementById('orbital-lens');
+        const ledgerContainer = document.getElementById('ledger-container');
+        
+        let audioCtx = null;
+        // Non-aleatory fundamental frequency architecture (Structured Minor Scale Steps)
+        const scaleFrequencies = [110.00, 123.47, 130.81, 146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63];
+        let blockAudioNodes = [];
+
+        window.addEventListener('mousemove', (e) => {
+            lens.style.left = e.clientX + 'px';
+            lens.style.top = e.clientY + 'px';
+            
+            if (audioCtx && blockAudioNodes.length > 0) {
+                updateSpatialAudio(e.clientX, e.clientY);
+            }
+        });
+
+        function activateSystem() {
+            document.getElementById('audio-prompt').style.display = 'none';
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            logTrack('SYSTEM', 'HARMONIC POLYPHONIC NODES ONLINE');
+            loadRepository();
+        }
+
+        function updateSpatialAudio(mouseX, mouseY) {
+            blockAudioNodes.forEach(node => {
+                const rect = node.element.getBoundingClientRect();
+                const blockCenterX = rect.left + rect.width / 2;
+                const blockCenterY = rect.top + rect.height / 2;
+
+                // Absolute distance tracking calculation
+                const distance = Math.hypot(mouseX - blockCenterX, mouseY - blockCenterY);
+                
+                // Pure dynamic spatial fade loop
+                let volume = 1 / (distance * 0.04);
+                volume = Math.min(Math.max(volume, 0), 0.08); // Lock baseline volume grid bounds
+
+                node.gainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.1);
+            });
+        }
+
+        async function loadRepository() {
+            const response = await fetch('data.vcs');
+            const csvText = await response.text();
+            const lines = csvText.trim().split('\n').slice(1);
+
+            const database = lines.map(line => {
+                const cols = line.split(',');
+                return {
+                    year: (cols[0] || "").trim(),
+                    mode: (cols[1] || "").trim(),
+                    entry: (cols[2] || "").trim(),
+                    context: (cols[3] || "").trim(),
+                    venue: (cols[4] || "").trim(),
+                    location: (cols[5] || "").trim()
+                };
+            });
+
+            const layouts = [
+                {col: "span 4", row: "span 2"}, {col: "span 5", row: "span 3"},
+                {col: "span 3", row: "span 2"}, {col: "span 5", row: "span 2"},
+                {col: "span 4", row: "span 3"}, {col: "span 3", row: "span 2"},
+                {col: "span 4", row: "span 2"}, {col: "span 5", row: "span 2"},
+                {col: "span 3", row: "span 3"}, {col: "span 6", row: "span 2"},
+                {col: "span 3", row: "span 2"}, {col: "span 3", row: "span 3"}
+            ];
+
+            matrixContainer.innerHTML = database.map((item, idx) => {
+                const layout = layouts[idx % layouts.length];
+                const rawType = item.mode.toLowerCase().trim();
+                let fileCategory = 'plus'; 
+
+                if (rawType === '+' || rawType === 'plus') {
+                    fileCategory = 'plus';
+                } else if (['solo', 'group', 'screening', 'performance', 'other'].includes(rawType)) {
+                    fileCategory = 'shows';
+                } else if (['press', 'publication', 'publications', 'editorial', 'essay', 'writing'].includes(rawType)) {
+                    fileCategory = 'writing';
+                } else if (['film', 'video', '16 mm', 'sound', 'multi', 'digital video', '4k'].includes(rawType)) {
+                    fileCategory = 'time-based_media';
+                } else if (rawType.includes('collect')) {
+                    fileCategory = 'collection';
+                } else if (rawType.includes('founding')) {
+                    fileCategory = 'founding';
+                } else if (rawType === 'code') {
+                    fileCategory = 'code';
+                }
+
+                const cleanTitle = item.entry.replace(/[^a-zA-Z0-9]/g, "-");
+                const identityString = `${item.year}_${fileCategory.toUpperCase()}_${cleanTitle}`;
+                const imagePath = `images/${item.year}_${fileCategory}.jpg`;
+
+                return `
+                    <div class="block" id="block-${idx}" style="grid-column: ${layout.col}; grid-row: ${layout.row};" 
+                         data-mode="${fileCategory}" data-text="${item.entry}" onclick="mutateSystem(this)">
+                        <canvas class="generative-canvas"></canvas>
+                        <img src="${imagePath}" class="asset-img" onload="this.classList.add('revealed')" onerror="this.style.display='none';">
+                        <div class="identity-label">${identityString}</div>
+                    </div>
+                `;
+            }).join('');
+
+            initializeCanvases();
+            initializePolyphonicMatrix();
+            attachInteractions();
+        }
+
+        function initializePolyphonicMatrix() {
+            blockAudioNodes = [];
+            document.querySelectorAll('.block').forEach((element, idx) => {
+                const mode = element.getAttribute('data-mode');
+                
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                // Map every distinct node index to a solid structured frequency note
+                const noteFrequency = scaleFrequencies[idx % scaleFrequencies.length];
+                osc.frequency.setValueAtTime(noteFrequency, audioCtx.currentTime);
+                
+                // Map specific clean sonic characters directly to category taxonomies
+                if (mode === 'code') {
+                    osc.type = 'triangle';
+                } else if (mode === 'plus') {
+                    osc.type = 'square';
+                } else if (mode === 'time-based_media') {
+                    osc.type = 'sawtooth';
+                } else {
+                    osc.type = 'sine';
+                }
+
+                gain.gain.setValueAtTime(0, audioCtx.currentTime); // Start fully silent
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+
+                blockAudioNodes.push({ element, oscillatorNode: osc, gainNode: gain });
+            });
+        }
+
+        function initializeCanvases() {
+            document.querySelectorAll('.block').forEach(block => {
+                const canvas = block.querySelector('.generative-canvas');
+                const ctx = canvas.getContext('2d');
+                const textStr = block.getAttribute('data-text');
+                
+                const resizeCanvas = () => {
+                    canvas.width = block.clientWidth;
+                    canvas.height = block.clientHeight;
+                    ctx.fillStyle = "rgba(120, 120, 120, 0.15)";
+                    ctx.font = "9px monospace";
+                    for(let i=0; i<4; i++) {
+                        ctx.fillText(textStr, Math.random() * (canvas.width - 60), Math.random() * canvas.height);
+                    }
+                };
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+            });
+        }
+
+        function attachInteractions() {
+            document.querySelectorAll('.block').forEach(block => {
+                const mode = block.getAttribute('data-mode');
+                const label = block.querySelector('.identity-label').innerText;
+
+                block.addEventListener('mouseenter', () => {
+                    if (mode === 'time-based_media') { lens.style.width = '70px'; lens.style.height = '70px'; } 
+                    else if (mode === 'code') { lens.style.width = '12px'; lens.style.height = '12px'; } 
+                    else if (mode === 'plus') { lens.style.width = '55px'; lens.style.height = '55px'; } 
+                    else { lens.style.width = '45px'; lens.style.height = '45px'; }
+                    humanTrajectory.push(mode);
+                    logTrack('HUMAN_FOCUS', `TRACK -> ${label}`);
+                });
+
+                block.addEventListener('mouseleave', () => {
+                    lens.style.width = '30px'; lens.style.height = '30px';
+                });
+            });
+        }
+
+        function mutateSystem(clickedBlock) {
+            for (let i = matrixContainer.children.length; i >= 0; i--) {
+                matrixContainer.appendChild(matrixContainer.children[Math.random() * i | 0]);
+            }
+            // Temporarily spike cross-fade audio on spatial block mutations
+            blockAudioNodes.forEach(node => {
+                const currentGain = node.gainNode.gain.value;
+                node.gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                node.gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+            });
+            const modeTrack = clickedBlock.getAttribute('data-mode').toUpperCase();
+            logTrack('MUTATION', `OPERATOR INTERVENTION // TARGET [${modeTrack}]`);
+        }
+
+        function logTrack(agent, detail) {
+            const time = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${time}] // ${agent} // ${detail}`;
+            ledgerContainer.appendChild(logEntry);
+            if (ledgerContainer.children.length > 4) {
+                ledgerContainer.removeChild(ledgerContainer.firstChild);
+            }
+        }
+
+        function toggleMode() { 
+            document.body.classList.toggle('dark-mode');
+            const titleElement = document.getElementById('main-name');
+            if (document.body.classList.contains('dark-mode')) {
+                titleElement.innerText = "K.ari.n Schneider";
+            } else {
+                titleElement.innerText = "KARIN SCHNEIDER";
+            }
+            logTrack('SYSTEM', 'VISUAL INVERSION TRIGGERED');
+        }
+    </script>
+</body>
+</html>
