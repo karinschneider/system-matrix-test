@@ -5,8 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Karin Schneider | System Index</title>
     <style>
-        :root { --bg: #ffffff; --text: #000000; --accent: #666666; --border: #dddddd; }
-        body.dark-mode { --bg: #000000; --text: #ffffff; --accent: #999999; --border: #333333; }
+        :root { 
+            --bg: #ffffff; 
+            --text: #000000; 
+            --accent: #666666; 
+            --border: #dddddd; 
+            --mono: "Courier New", Courier, monospace;
+        }
+        body.dark-mode { 
+            --bg: #000000; 
+            --text: #ffffff; 
+            --accent: #999999; 
+            --border: #333333; 
+        }
         
         body { 
             background-color: var(--bg); color: var(--text); 
@@ -19,10 +30,47 @@
             box-sizing: border-box;
         }
         
-        header { margin-bottom: 40px; border-bottom: 2px solid var(--text); padding-bottom: 20px; }
-        .header-top { display: flex; justify-content: space-between; align-items: baseline; }
+        header { margin-bottom: 30px; }
+        .header-top { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--text); padding-bottom: 20px; }
         .title { font-size: 20px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
         
+        /* Standardized Console Shell Typography */
+        .system-log-zone {
+            font-family: var(--mono);
+            font-size: 12px;
+            margin-top: 20px;
+            text-transform: uppercase;
+        }
+        .log-text-line { margin-bottom: 10px; line-height: 1.4; word-break: break-all; }
+        
+        .master-toggle-line, .console-matrix-row {
+            font-family: var(--mono);
+            font-size: 11px;
+            margin: 15px 0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .console-matrix-row { gap: 20px; margin: 10px 0; }
+        
+        .console-divider {
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--text);
+            margin: 15px 0 10px 0;
+            border-bottom: 1px solid var(--text);
+            padding-bottom: 5px;
+        }
+
+        .selectable-node {
+            cursor: pointer;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .selectable-node:hover { color: var(--accent); }
+
         .mode-toggle { 
             border: 1px solid var(--text); background: none; padding: 4px 12px; 
             cursor: pointer; font-size: 11px; text-transform: uppercase; 
@@ -32,7 +80,7 @@
         
         #grid-matrix { 
             display: grid; grid-template-columns: repeat(12, 1fr); auto-rows: 140px; 
-            gap: 15px; width: 100%; margin-bottom: 60px;
+            gap: 15px; width: 100%; margin-top: 30px; margin-bottom: 60px;
         }
         
         .block { 
@@ -62,12 +110,12 @@
         }
 
         #ledger-container {
-            font-family: monospace; font-size: 10px; color: var(--accent);
-            line-height: 1.5; margin-bottom: 20px; display: flex; flex-direction: column;
+            font-family: var(--mono); font-size: 10px; color: var(--accent);
+            line-height: 1.5; margin-top: 20px; margin-bottom: 20px; display: flex; flex-direction: column;
         }
 
         #audio-prompt {
-            border: 1px dashed var(--text); padding: 20px; margin-bottom: 25px;
+            border: 1px dashed var(--text); padding: 20px; margin-top: 20px; margin-bottom: 25px;
             color: var(--text); display: flex; justify-content: center; 
             align-items: center; font-size: 12px; letter-spacing: 2px; 
             font-weight: bold; cursor: pointer; text-transform: uppercase;
@@ -88,44 +136,102 @@
             <div class="title" id="main-name">K.ari.n Schneider</div>
             <button class="mode-toggle" onclick="toggleMode()">Invert System</button>
         </div>
+
+        <div class="system-log-zone">
+            <div class="log-text-line" id="live-timestamp-log">[SIGNAL RECEPTOR IDLE] // CLICK INITIALIZE TO ENGAGE VOLTAGE PIPELINE</div>
+            <div class="master-toggle-line">
+                <span class="selectable-node" onclick="toggleMasterUser('raw')"><span id="m-raw">(•)</span> RAW</span>
+                <span class="selectable-node" onclick="toggleMasterUser('goog')"><span id="m-goog">( )</span> GOOG</span>
+                <span class="selectable-node" onclick="toggleMasterUser('mute')"><span id="m-mute">( )</span> [MUTE]</span>
+            </div>
+        </div>
+
+        <div class="console-divider">========================================== CONSOLE =======================================</div>
+        
+        <div class="console-matrix-row">
+            <div>
+                <div>[WHITNEY]</div>
+                <div class="selectable-node" onclick="toggleChannel('whitney','raw')"><span id="whitney-raw">(•)</span> RAW</div>
+                <div class="selectable-node" onclick="toggleChannel('whitney','goog')"><span id="whitney-goog">( )</span> GOOG</div>
+            </div>
+            <div>
+                <div>[POMPIDOU]</div>
+                <div class="selectable-node" onclick="toggleChannel('pompidou','raw')"><span id="pompidou-raw">( )</span> RAW</div>
+                <div class="selectable-node" onclick="toggleChannel('pompidou','goog')"><span id="pompidou-goog">(•)</span> GOOG</div>
+            </div>
+            <div>
+                <div>[SZTUKI]</div>
+                <div class="selectable-node" onclick="toggleChannel('sztuki','raw')"><span id="sztuki-raw">(•)</span> RAW</div>
+                <div class="selectable-node" onclick="toggleChannel('sztuki','goog')"><span id="sztuki-goog">( )</span> GOOG</div>
+            </div>
+            <div>
+                <div>[MoMA SP]</div>
+                <div class="selectable-node" onclick="toggleChannel('momasp','raw')"><span id="momasp-raw">( )</span> RAW</div>
+                <div class="selectable-node" onclick="toggleChannel('momasp','goog')"><span id="momasp-goog">(•)</span> GOOG</div>
+            </div>
+            <div>
+                <div>[MODERNO]</div>
+                <div class="selectable-node" onclick="toggleChannel('moderno','raw')"><span id="moderno-raw">( )</span> RAW</div>
+                <div class="selectable-node" onclick="toggleChannel('moderno','goog')"><span id="moderno-goog">(•)</span> GOOG</div>
+            </div>
+            <div>
+                <div>[RIJEKA]</div>
+                <div class="selectable-node" onclick="toggleChannel('rijeka','raw')"><span id="rijeka-raw">(•)</span> RAW</div>
+                <div class="selectable-node" onclick="toggleChannel('rijeka','goog')"><span id="rijeka-goog">( )</span> GOOG</div>
+            </div>
+            <div style="margin-left: auto; display: flex; flex-direction: column; justify-content: center; gap: 5px;">
+                <span class="selectable-node" onclick="globalOverride('all')">──► [ADD ALL]</span>
+                <span class="selectable-node" onclick="globalOverride('mute')">──► [MUTE ALL]</span>
+            </div>
+        </div>
     </header>
 
     <div id="audio-prompt" onclick="activateSystem()">[ Initialize Electromagnetic Acoustic Matrix ]</div>
     
-    <div id="ledger-container">
-        <div>[SIGNAL RECEPTOR IDLE] // EXPECTING TRANSACTIONS</div>
-    </div>
+    <div id="ledger-container"></div>
     
     <div id="grid-matrix"></div>
     <div id="orbital-lens"></div>
 
-    <!-- The Pure Institutional Network Transduction Matrix -->
     <script>
     let audioCtx = null;
     let serverAirFilter = null;
-    let activeNodeSignals = new Map(); // Tracks live packet telemetry for your actual collection rows
-    let blockAudioNodes = []; // Tracks matrix blocks
+    let activeNodeSignals = new Map(); 
+    let blockAudioNodes = []; 
+    let masterUserMode = 'raw';
+    let rawCsvText = ""; // Holds unfixed data.vcs state for the Linguistic Swift
+    
+    // Core state configurations
+    let channelStates = {
+        whitney: { raw: true, goog: false, domain: 'https://www.whitney.org', baseFreq: 440.00 },
+        pompidou: { raw: false, goog: true, domain: 'https://www.centrepompidou.fr', baseFreq: 293.66 },
+        sztuki: { raw: true, goog: false, domain: 'https://msl.org.pl', baseFreq: 293.66 },
+        momasp: { raw: false, goog: true, domain: 'https://mam.org.br', baseFreq: 440.00 },
+        moderno: { raw: false, goog: true, domain: 'https://museomoderno.org', baseFreq: 440.00 },
+        rijeka: { raw: true, goog: false, domain: 'https://mmsu.hr', baseFreq: 293.66 }
+    };
+
     const matrixContainer = document.getElementById('grid-matrix');
     const ledgerContainer = document.getElementById('ledger-container');
     const lens = document.getElementById('orbital-lens');
     let humanTrajectory = [];
+    let lastInteractionTime = Date.now();
 
-    // 1. Initialize the Native Host Datacenter Infrastructure
     function initializePureSystem() {
         if (audioCtx) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        // Low-end Datacenter Transformers: The native 60Hz ground wave of the host server
+        // Host Ground Wave
         const subHum = audioCtx.createOscillator();
         const subGain = audioCtx.createGain();
         subHum.type = 'sine';
         subHum.frequency.setValueAtTime(60, audioCtx.currentTime);
-        subGain.gain.setValueAtTime(0.02, audioCtx.currentTime); // Deep, non-intrusive weight
+        subGain.gain.setValueAtTime(0.02, audioCtx.currentTime); 
         subHum.connect(subGain);
         subGain.connect(audioCtx.destination);
         subHum.start();
 
-        // Host Server Rack Air Shear (The physical space your code occupies)
+        // Server Fan Simulation Base Noise
         const bufferSize = audioCtx.sampleRate * 2;
         const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
@@ -135,7 +241,7 @@
         
         serverAirFilter = audioCtx.createBiquadFilter();
         serverAirFilter.type = 'bandpass';
-        serverAirFilter.frequency.setValueAtTime(650, audioCtx.currentTime); // Cold, hollow casing resonance
+        serverAirFilter.frequency.setValueAtTime(650, audioCtx.currentTime); 
         serverAirFilter.Q.setValueAtTime(1.0, audioCtx.currentTime);
 
         const airNoiseSource = audioCtx.createBufferSource();
@@ -143,80 +249,122 @@
         airNoiseSource.loop = true;
         
         const airGain = audioCtx.createGain();
-        airGain.gain.setValueAtTime(0.008, audioCtx.currentTime); // The quiet, physical baseline of the room
+        airGain.gain.setValueAtTime(0.008, audioCtx.currentTime); 
         
         airNoiseSource.connect(serverAirFilter);
         serverAirFilter.connect(airGain);
         airGain.connect(audioCtx.destination);
         airNoiseSource.start();
 
-        // Dynamically harvest only the authentic collection connections present on the screen
-        harvestAuthenticLedger();
+        // Spawns continuous multi-museum audio tracks 
+        buildMuseumOscillators();
     }
 
-    // 2. Scrape whatever rows exist in your live visual database layout
-    function harvestAuthenticLedger() {
-        // Queries the live elements visible in your interface layout
-        const rows = document.querySelectorAll('table tr, .grid-row, .collection-list-item, .block'); 
-        
-        rows.forEach((row) => {
-            const textContent = row.textContent.toLowerCase() || (row.getAttribute('data-text') || "").toLowerCase();
-            let targetDomain = '';
-
-            // Route strictly to the domains that hold your work
-            if (textContent.includes('whitney')) targetDomain = 'https://www.whitney.org';
-            else if (textContent.includes('sztuki')) targetDomain = 'https://msl.org.pl';
-            else if (textContent.includes('pompidou')) targetDomain = 'https://www.centrepompidou.fr';
-            else if (textContent.includes('são paulo')) targetDomain = 'https://mam.org.br';
-            else if (textContent.includes('moderno')) targetDomain = 'https://museomoderno.org';
-            else if (textContent.includes('rijeka')) targetDomain = 'https://mmsu.hr';
-            else return; // Dynamically skips rows not matching your collection targets
-
-            // Create a unique electromagnetic coil signature for this specific institutional node
+    function buildMuseumOscillators() {
+        Object.keys(channelStates).forEach((key) => {
+            const ch = channelStates[key];
+            
             const nodeGain = audioCtx.createGain();
-            nodeGain.gain.setValueAtTime(0.0, audioCtx.currentTime); // Silent until grounded by the cursor
+            nodeGain.gain.setValueAtTime(ch.raw ? 0.015 : 0.0, audioCtx.currentTime);
             
-            const packetOsc = audioCtx.createOscillator();
-            packetOsc.type = 'sawtooth'; // Raw, unstable, linear silicon texture
+            const osc = audioCtx.createOscillator();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(ch.baseFreq, audioCtx.currentTime);
             
-            // Base frequency shifts by geographic network routing distance
-            const isEuropean = targetDomain.includes('.pl') || targetDomain.includes('.fr') || targetDomain.includes('.hr');
-            const baseFreq = isEuropean ? 293.66 : 440.00; // D4 vs A4 pitch markers
-            packetOsc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+            // Continuous tracking filter noise layer allocation
+            const filterNoiseGain = audioCtx.createGain();
+            filterNoiseGain.gain.setValueAtTime(ch.goog ? 0.006 : 0.0, audioCtx.currentTime);
             
-            packetOsc.connect(nodeGain);
+            const filterMod = audioCtx.createOscillator();
+            filterMod.type = 'square';
+            filterMod.frequency.setValueAtTime(14000, audioCtx.currentTime); // High-frequency corporate telemetry hiss
+
+            osc.connect(nodeGain);
             nodeGain.connect(audioCtx.destination);
-            packetOsc.start();
+            osc.start();
 
-            const nodeData = { domain: targetDomain, gain: nodeGain, osc: packetOsc, baseFreq: baseFreq, latencyHistory: [] };
-            activeNodeSignals.set(row, nodeData);
+            filterMod.connect(filterNoiseGain);
+            filterNoiseGain.connect(audioCtx.destination);
+            filterMod.start();
 
-            // Continuous background telemetry harvesting: The daily global transaction cycle
+            ch.audioNode = { osc, gain: nodeGain, fMod: filterMod, fGain: filterNoiseGain, latencyHistory: [] };
+
+            // Dynamic ping cycles syncing telemetry data to audio loop frequencies
             setInterval(() => {
+                if (masterUserMode === 'mute') return;
                 const start = performance.now();
-                fetch(targetDomain + '/?ping=' + start, { mode: 'no-cors', cache: 'no-store' })
+                fetch(ch.domain + '/?ping=' + start, { mode: 'no-cors', cache: 'no-store' })
                     .then(() => {
                         const latency = performance.now() - start;
-                        nodeData.latencyHistory.push(latency);
-                        if (nodeData.latencyHistory.length > 5) nodeData.latencyHistory.shift();
+                        ch.audioNode.latencyHistory.push(latency);
+                        if (ch.audioNode.latencyHistory.length > 5) ch.audioNode.latencyHistory.shift();
                         
-                        const avgLatency = nodeData.latencyHistory.reduce((a, b) => a + b, 0) / nodeData.latencyHistory.length;
+                        const avgLatency = ch.audioNode.latencyHistory.reduce((a, b) => a + b, 0) / ch.audioNode.latencyHistory.length;
                         const jitter = Math.abs(latency - avgLatency);
                         
-                        // Modulate the specific node frequency by its live traffic jitter
-                        nodeData.osc.frequency.setTargetAtTime(nodeData.baseFreq + (jitter * 4), audioCtx.currentTime, 0.05);
+                        // If master tracker toggle is GOOG, compress and quantize human metrics
+                        let multiplier = masterUserMode === 'goog' ? 1.0 : 4.0;
+                        let targetFreq = ch.baseFreq + (jitter * multiplier);
+                        
+                        if (ch.raw) ch.audioNode.osc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.05);
+                        if (ch.goog) ch.audioNode.fMod.frequency.setTargetAtTime(14000 + (jitter * 10), audioCtx.currentTime, 0.02);
                     }).catch(() => {});
-            }, 1000 + Math.random() * 600); // Non-synchronous polling loops to preserve organic variance
-
-            // 3. The Short-Circuit Interaction Mechanics
-            row.addEventListener('mouseenter', () => {
-                nodeData.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.03);
-            });
-
-            row.addEventListener('mouseleave', () => {
-                nodeData.gain.setTargetAtTime(0.0, audioCtx.currentTime, 0.08);
-            });
+            }, 1000 + Math.random() * 600);
         });
+    }
+
+    function toggleMasterUser(targetState) {
+        masterUserMode = targetState;
+        document.getElementById('m-raw').innerText = targetState === 'raw' ? '(•)' : '( )';
+        document.getElementById('m-goog').innerText = targetState === 'goog' ? '(•)' : '( )';
+        document.getElementById('m-mute').innerText = targetState === 'mute' ? '(•)' : '( )';
+        
+        if (!audioCtx) return;
+        if (targetState === 'mute') {
+            Object.keys(channelStates).forEach(k => {
+                channelStates[k].audioNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                channelStates[k].audioNode.fGain.setValueAtTime(0, audioCtx.currentTime);
+            });
+        } else {
+            updateAllAudioOutputs();
+        }
+    }
+
+    function toggleChannel(museum, type) {
+        const opposite = type === 'raw' ? 'goog' : 'raw';
+        channelStates[museum][type] = !channelStates[museum][type];
+        
+        document.getElementById(`${museum}-${type}`).innerText = channelStates[museum][type] ? '(•)' : '( )';
+        
+        if (!audioCtx) return;
+        updateAllAudioOutputs();
+    }
+
+    function updateAllAudioOutputs() {
+        if (masterUserMode === 'mute') return;
+        Object.keys(channelStates).forEach(k => {
+            const ch = channelStates[k];
+            if (!ch.audioNode) return;
+            ch.audioNode.gain.setValueAtTime(ch.raw ? 0.015 : 0.0, audioCtx.currentTime);
+            ch.audioNode.fGain.setValueAtTime(ch.goog ? 0.006 : 0.0, audioCtx.currentTime);
+        });
+    }
+
+    function globalOverride(action) {
+        Object.keys(channelStates).forEach(m => {
+            if (action === 'all') {
+                channelStates[m].raw = true;
+                channelStates[m].goog = true;
+                document.getElementById(`${m}-raw`).innerText = '(•)';
+                document.getElementById(`${m}-goog`).innerText = '(•)';
+            } else if (action === 'mute') {
+                channelStates[m].raw = false;
+                channelStates[m].goog = false;
+                document.getElementById(`${m}-raw`).innerText = '( )';
+                document.getElementById(`${m}-goog`).innerText = '( )';
+            }
+        });
+        if (audioCtx) updateAllAudioOutputs();
     }
 
     function activateSystem() {
@@ -237,7 +385,7 @@
 
             const processorWhine = audioCtx.createOscillator();
             processorWhine.type = 'sawtooth';
-            const baseFreq = mode === 'code' ? 9200 : 5500 + (idx * 180);
+            const baseFreq = mode === 'code' ? 9200 : 4200 + (idx * 120);
             processorWhine.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
 
             const diskReadClick = audioCtx.createOscillator();
@@ -264,11 +412,11 @@
             const rect = node.element.getBoundingClientRect();
             const blockCenterX = rect.left + rect.width / 2;
             const blockCenterY = rect.top + rect.height / 2;
-
             const distance = Math.hypot(mouseX - blockCenterX, mouseY - blockCenterY);
             
             if (distance < 110) {
-                const voltageJitter = (Math.random() - 0.5) * 750;
+                let jitterMod = masterUserMode === 'goog' ? 100 : 750;
+                const voltageJitter = (Math.random() - 0.5) * jitterMod;
                 node.processorWhine.frequency.setValueAtTime(node.baseFreq + voltageJitter, audioCtx.currentTime);
                 node.gainNode.gain.setTargetAtTime(0.010, audioCtx.currentTime, 0.01);
             } else {
@@ -279,8 +427,8 @@
 
     async function loadRepository() {
         const response = await fetch('data.vcs');
-        const csvText = await response.text();
-        const lines = csvText.trim().split('\n').slice(1);
+        rawCsvText = await response.text();
+        const lines = rawCsvText.trim().split('\n').slice(1);
 
         const database = lines.map(line => {
             const cols = line.split(',');
@@ -381,21 +529,32 @@
                 lens.style.width = '30px'; lens.style.height = '30px';
             });
         });
-
-        // Re-harvest newly generated DOM elements for the live transaction pipelines
-        harvestAuthenticLedger();
     }
 
+    // THE LINGUISTIC SWIFT INTERCEPT SYSTEM
     function mutateSystem(clickedBlock) {
+        const textPayload = clickedBlock.getAttribute('data-text');
+        
+        // Dynamic Linguistic Swift translation: Calculates data.vcs state footprint bounds
+        const stringWeight = textPayload.length;
+        const totalVcsWeight = rawCsvText.length;
+        
+        // Randomizes positions
         for (let i = matrixContainer.children.length; i >= 0; i--) {
             matrixContainer.appendChild(matrixContainer.children[Math.random() * i | 0]);
         }
+        
+        // Comb Filter execution loop mapping unfixed string metrics to the audio buffer outputs
         blockAudioNodes.forEach(node => {
-            node.gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
-            node.gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
+            let frequencyShift = masterUserMode === 'raw' ? (stringWeight * 25) : 300;
+            node.processorWhine.frequency.setValueAtTime(node.baseFreq + frequencyShift, audioCtx.currentTime);
+            
+            node.gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            node.gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + (stringWeight / 150));
         });
+        
         const modeTrack = clickedBlock.getAttribute('data-mode').toUpperCase();
-        logTrack('HARDWARE_MUTATE', `SECTOR RESET // TARGET [${modeTrack}]`);
+        logTrack('HARDWARE_MUTATE', `SWIFT INGESTION // COLLISION STRING LEN: ${stringWeight} BYTES`);
     }
 
     function logTrack(agent, detail) {
@@ -411,224 +570,27 @@
     function toggleMode() { 
         document.body.classList.toggle('dark-mode');
         const titleElement = document.getElementById('main-name');
-        if (document.body.classList.contains('dark-mode')) {
-            titleElement.innerText = "K.ari.n Schneider";
-        } else {
-            titleElement.innerText = "KARIN SCHNEIDER";
-        }
+        titleElement.innerText = document.body.classList.contains('dark-mode') ? "K.ari.n Schneider" : "KARIN SCHNEIDER";
         logTrack('SYS_INVERT', 'POLARITY INVERSION EFFECTED');
     }
 
-    // Capture global human trajectory to fuel the spatial audio shifts
+    // Live User Data Log Ingestion Pipeline
     window.addEventListener('mousemove', (e) => {
+        if (!audioCtx) return;
         updateSpatialAudio(e.clientX, e.clientY);
+        
+        const now = Date.now();
+        const velocity = now - lastInteractionTime;
+        lastInteractionTime = now;
+        
+        const timeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        document.getElementById('live-timestamp-log').innerText = `[${timeStr}] // USER_ENTRY_DELTA // COORD: [X:${e.clientX}, Y:${e.clientY}] // VELOCITY: ${velocity}ms`;
+        
         if (lens) {
             lens.style.left = e.clientX + 'px';
             lens.style.top = e.clientY + 'px';
         }
     });
 </script>
-        function activateSystem() {
-            document.getElementById('audio-prompt').style.display = 'none';
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            logTrack('HARDWARE', 'BUS TERMINALS OPEN');
-            loadRepository();
-        }
-
-        function initializePolyphonicMatrix() {
-            blockAudioNodes = [];
-            document.querySelectorAll('.block').forEach((element, idx) => {
-                const mode = element.getAttribute('data-mode');
-                
-                const gainNode = audioCtx.createGain();
-                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                gainNode.connect(audioCtx.destination);
-
-                // Processor Coil Whine: Sharp electrical frequency strain
-                const processorWhine = audioCtx.createOscillator();
-                processorWhine.type = 'sawtooth';
-                const baseFreq = mode === 'code' ? 9200 : 5500 + (idx * 180);
-                processorWhine.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
-
-                // Actuator Arm Ticks: Rhythmic square modulation forcing physical clicking textures
-                const diskReadClick = audioCtx.createOscillator();
-                diskReadClick.type = 'square';
-                diskReadClick.frequency.setValueAtTime(mode === 'time-based_media' ? 14 : 38, audioCtx.currentTime);
-                
-                const clickDepth = audioCtx.createGain();
-                clickDepth.gain.setValueAtTime(3000, audioCtx.currentTime); // Violent steps to create a ticking bus line
-
-                diskReadClick.connect(clickDepth);
-                clickDepth.connect(processorWhine.frequency);
-                processorWhine.connect(gainNode);
-                
-                diskReadClick.start();
-                processorWhine.start();
-
-                blockAudioNodes.push({ element, gainNode, processorWhine, baseFreq });
-            });
-        }
-
-        function updateSpatialAudio(mouseX, mouseY) {
-            blockAudioNodes.forEach(node => {
-                const rect = node.element.getBoundingClientRect();
-                const blockCenterX = rect.left + rect.width / 2;
-                const blockCenterY = rect.top + rect.height / 2;
-
-                const distance = Math.hypot(mouseX - blockCenterX, mouseY - blockCenterY);
-                
-                // Pure monochrome threshold logic: either completely inside the light path or silent
-                if (distance < 110) {
-                    // Inject volatile load jitter to match silicon under computing demands
-                    const voltageJitter = (Math.random() - 0.5) * 750;
-                    node.processorWhine.frequency.setValueAtTime(node.baseFreq + voltageJitter, audioCtx.currentTime);
-                    
-                    // Low amplitude signal generation to remain clinical and internal
-                    node.gainNode.gain.setTargetAtTime(0.010, audioCtx.currentTime, 0.01);
-                } else {
-                    node.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
-                }
-            });
-        }
-
-        async function loadRepository() {
-            const response = await fetch('data.vcs');
-            const csvText = await response.text();
-            const lines = csvText.trim().split('\n').slice(1);
-
-            const database = lines.map(line => {
-                const cols = line.split(',');
-                return {
-                    year: (cols[0] || "").trim(),
-                    mode: (cols[1] || "").trim(),
-                    entry: (cols[2] || "").trim(),
-                    context: (cols[3] || "").trim(),
-                    venue: (cols[4] || "").trim(),
-                    location: (cols[5] || "").trim()
-                };
-            });
-
-            const layouts = [
-                {col: "span 4", row: "span 2"}, {col: "span 5", row: "span 3"},
-                {col: "span 3", row: "span 2"}, {col: "span 5", row: "span 2"},
-                {col: "span 4", row: "span 3"}, {col: "span 3", row: "span 2"},
-                {col: "span 4", row: "span 2"}, {col: "span 5", row: "span 2"},
-                {col: "span 3", row: "span 3"}, {col: "span 6", row: "span 2"},
-                {col: "span 3", row: "span 2"}, {col: "span 3", row: "span 3"}
-            ];
-
-            matrixContainer.innerHTML = database.map((item, idx) => {
-                const layout = layouts[idx % layouts.length];
-                const rawType = item.mode.toLowerCase().trim();
-                let fileCategory = 'plus'; 
-
-                if (rawType === '+' || rawType === 'plus') {
-                    fileCategory = 'plus';
-                } else if (['solo', 'group', 'screening', 'performance', 'other'].includes(rawType)) {
-                    fileCategory = 'shows';
-                } else if (['press', 'publication', 'publications', 'editorial', 'essay', 'writing'].includes(rawType)) {
-                    fileCategory = 'writing';
-                } else if (['film', 'video', '16 mm', 'sound', 'multi', 'digital video', '4k'].includes(rawType)) {
-                    fileCategory = 'time-based_media';
-                } else if (rawType.includes('collect')) {
-                    fileCategory = 'collection';
-                } else if (rawType.includes('founding')) {
-                    fileCategory = 'founding';
-                } else if (rawType === 'code') {
-                    fileCategory = 'code';
-                }
-
-                const cleanTitle = item.entry.replace(/[^a-zA-Z0-9]/g, "-");
-                const identityString = `${item.year}_${fileCategory.toUpperCase()}_${cleanTitle}`;
-                const imagePath = `images/${item.year}_${fileCategory}.jpg`;
-
-                return `
-                    <div class="block" id="block-${idx}" style="grid-column: ${layout.col}; grid-row: ${layout.row};" 
-                         data-mode="${fileCategory}" data-text="${item.entry}" onclick="mutateSystem(this)">
-                        <canvas class="generative-canvas"></canvas>
-                        <img src="${imagePath}" class="asset-img" onload="this.classList.add('revealed')" onerror="this.style.display='none';">
-                        <div class="identity-label">${identityString}</div>
-                    </div>
-                `;
-            }).join('');
-
-            initializeCanvases();
-            initializePolyphonicMatrix();
-            attachInteractions();
-        }
-
-        function initializeCanvases() {
-            document.querySelectorAll('.block').forEach(block => {
-                const canvas = block.querySelector('.generative-canvas');
-                const ctx = canvas.getContext('2d');
-                const textStr = block.getAttribute('data-text');
-                
-                const resizeCanvas = () => {
-                    canvas.width = block.clientWidth;
-                    canvas.height = block.clientHeight;
-                    ctx.fillStyle = "rgba(120, 120, 120, 0.12)";
-                    ctx.font = "9px monospace";
-                    for(let i=0; i<3; i++) {
-                        ctx.fillText(textStr, Math.random() * (canvas.width - 60), Math.random() * canvas.height);
-                    }
-                };
-                resizeCanvas();
-                window.addEventListener('resize', resizeCanvas);
-            });
-        }
-
-        function attachInteractions() {
-            document.querySelectorAll('.block').forEach(block => {
-                const mode = block.getAttribute('data-mode');
-                const label = block.querySelector('.identity-label').innerText;
-
-                block.addEventListener('mouseenter', () => {
-                    if (mode === 'time-based_media') { lens.style.width = '70px'; lens.style.height = '70px'; } 
-                    else if (mode === 'code') { lens.style.width = '12px'; lens.style.height = '12px'; } 
-                    else if (mode === 'plus') { lens.style.width = '55px'; lens.style.height = '55px'; } 
-                    else { lens.style.width = '45px'; lens.style.height = '45px'; }
-                    humanTrajectory.push(mode);
-                    logTrack('BUS_READ', `DRIVE -> ${label}`);
-                });
-
-                block.addEventListener('mouseleave', () => {
-                    lens.style.width = '30px'; lens.style.height = '30px';
-                });
-            });
-        }
-
-        function mutateSystem(clickedBlock) {
-            for (let i = matrixContainer.children.length; i >= 0; i--) {
-                matrixContainer.appendChild(matrixContainer.children[Math.random() * i | 0]);
-            }
-            blockAudioNodes.forEach(node => {
-                node.gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
-                node.gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
-            });
-            const modeTrack = clickedBlock.getAttribute('data-mode').toUpperCase();
-            logTrack('HARDWARE_MUTATE', `SECTOR RESET // TARGET [${modeTrack}]`);
-        }
-
-        function logTrack(agent, detail) {
-            const time = new Date().toLocaleTimeString();
-            const logEntry = document.createElement('div');
-            logEntry.innerHTML = `[${time}] // ${agent} // ${detail}`;
-            ledgerContainer.appendChild(logEntry);
-            if (ledgerContainer.children.length > 4) {
-                ledgerContainer.removeChild(ledgerContainer.firstChild);
-            }
-        }
-
-        function toggleMode() { 
-            document.body.classList.toggle('dark-mode');
-            const titleElement = document.getElementById('main-name');
-            if (document.body.classList.contains('dark-mode')) {
-                titleElement.innerText = "K.ari.n Schneider";
-            } else {
-                titleElement.innerText = "KARIN SCHNEIDER";
-            }
-            logTrack('SYS_INVERT', 'POLARITY INVERSION EFFECTED');
-        }
-    </script>
 </body>
 </html>
