@@ -79,12 +79,6 @@
             transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s, background-color 0.3s; 
             mix-blend-mode: difference; 
         }
-
-        footer { 
-            position: relative; width: 100%; margin-top: 60px;
-            border-top: 1px solid var(--border); padding-top: 20px;
-            font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;
-        }
     </style>
 </head>
 <body class="dark-mode">
@@ -96,10 +90,10 @@
         </div>
     </header>
 
-    <div id="audio-prompt" onclick="activateSystem()">[ Click to Initialize Spatial Harmonic Matrix ]</div>
+    <div id="audio-prompt" onclick="activateSystem()">[ Initialize Electromagnetic Acoustic Matrix ]</div>
     
     <div id="ledger-container">
-        <div>[SYSTEM INITIALIZED] // POLYPHONIC HARMONIC FIELD LIVE</div>
+        <div>[SIGNAL RECEPTOR IDLE] // EXPECTING TRANSACTIONS</div>
     </div>
     
     <div id="grid-matrix"></div>
@@ -111,9 +105,8 @@
         const ledgerContainer = document.getElementById('ledger-container');
         
         let audioCtx = null;
-        // Non-aleatory fundamental frequency architecture (Structured Minor Scale Steps)
-        const scaleFrequencies = [110.00, 123.47, 130.81, 146.83, 164.81, 174.61, 196.00, 220.00, 246.94, 261.63, 293.66, 329.63];
         let blockAudioNodes = [];
+        let humanTrajectory = [];
 
         window.addEventListener('mousemove', (e) => {
             lens.style.left = e.clientX + 'px';
@@ -127,8 +120,42 @@
         function activateSystem() {
             document.getElementById('audio-prompt').style.display = 'none';
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            logTrack('SYSTEM', 'HARMONIC POLYPHONIC NODES ONLINE');
+            logTrack('HARDWARE', 'BUS TERMINALS OPEN');
             loadRepository();
+        }
+
+        function initializePolyphonicMatrix() {
+            blockAudioNodes = [];
+            document.querySelectorAll('.block').forEach((element, idx) => {
+                const mode = element.getAttribute('data-mode');
+                
+                const gainNode = audioCtx.createGain();
+                gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                gainNode.connect(audioCtx.destination);
+
+                // Processor Coil Whine: Sharp electrical frequency strain
+                const processorWhine = audioCtx.createOscillator();
+                processorWhine.type = 'sawtooth';
+                const baseFreq = mode === 'code' ? 9200 : 5500 + (idx * 180);
+                processorWhine.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+
+                // Actuator Arm Ticks: Rhythmic square modulation forcing physical clicking textures
+                const diskReadClick = audioCtx.createOscillator();
+                diskReadClick.type = 'square';
+                diskReadClick.frequency.setValueAtTime(mode === 'time-based_media' ? 14 : 38, audioCtx.currentTime);
+                
+                const clickDepth = audioCtx.createGain();
+                clickDepth.gain.setValueAtTime(3000, audioCtx.currentTime); // Violent steps to create a ticking bus line
+
+                diskReadClick.connect(clickDepth);
+                clickDepth.connect(processorWhine.frequency);
+                processorWhine.connect(gainNode);
+                
+                diskReadClick.start();
+                processorWhine.start();
+
+                blockAudioNodes.push({ element, gainNode, processorWhine, baseFreq });
+            });
         }
 
         function updateSpatialAudio(mouseX, mouseY) {
@@ -137,14 +164,19 @@
                 const blockCenterX = rect.left + rect.width / 2;
                 const blockCenterY = rect.top + rect.height / 2;
 
-                // Absolute distance tracking calculation
                 const distance = Math.hypot(mouseX - blockCenterX, mouseY - blockCenterY);
                 
-                // Pure dynamic spatial fade loop
-                let volume = 1 / (distance * 0.04);
-                volume = Math.min(Math.max(volume, 0), 0.08); // Lock baseline volume grid bounds
-
-                node.gainNode.gain.setTargetAtTime(volume, audioCtx.currentTime, 0.1);
+                // Pure monochrome threshold logic: either completely inside the light path or silent
+                if (distance < 110) {
+                    // Inject volatile load jitter to match silicon under computing demands
+                    const voltageJitter = (Math.random() - 0.5) * 750;
+                    node.processorWhine.frequency.setValueAtTime(node.baseFreq + voltageJitter, audioCtx.currentTime);
+                    
+                    // Low amplitude signal generation to remain clinical and internal
+                    node.gainNode.gain.setTargetAtTime(0.010, audioCtx.currentTime, 0.01);
+                } else {
+                    node.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
+                }
             });
         }
 
@@ -214,39 +246,6 @@
             attachInteractions();
         }
 
-        function initializePolyphonicMatrix() {
-            blockAudioNodes = [];
-            document.querySelectorAll('.block').forEach((element, idx) => {
-                const mode = element.getAttribute('data-mode');
-                
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                
-                // Map every distinct node index to a solid structured frequency note
-                const noteFrequency = scaleFrequencies[idx % scaleFrequencies.length];
-                osc.frequency.setValueAtTime(noteFrequency, audioCtx.currentTime);
-                
-                // Map specific clean sonic characters directly to category taxonomies
-                if (mode === 'code') {
-                    osc.type = 'triangle';
-                } else if (mode === 'plus') {
-                    osc.type = 'square';
-                } else if (mode === 'time-based_media') {
-                    osc.type = 'sawtooth';
-                } else {
-                    osc.type = 'sine';
-                }
-
-                gain.gain.setValueAtTime(0, audioCtx.currentTime); // Start fully silent
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                osc.start();
-
-                blockAudioNodes.push({ element, oscillatorNode: osc, gainNode: gain });
-            });
-        }
-
         function initializeCanvases() {
             document.querySelectorAll('.block').forEach(block => {
                 const canvas = block.querySelector('.generative-canvas');
@@ -256,9 +255,9 @@
                 const resizeCanvas = () => {
                     canvas.width = block.clientWidth;
                     canvas.height = block.clientHeight;
-                    ctx.fillStyle = "rgba(120, 120, 120, 0.15)";
+                    ctx.fillStyle = "rgba(120, 120, 120, 0.12)";
                     ctx.font = "9px monospace";
-                    for(let i=0; i<4; i++) {
+                    for(let i=0; i<3; i++) {
                         ctx.fillText(textStr, Math.random() * (canvas.width - 60), Math.random() * canvas.height);
                     }
                 };
@@ -278,7 +277,7 @@
                     else if (mode === 'plus') { lens.style.width = '55px'; lens.style.height = '55px'; } 
                     else { lens.style.width = '45px'; lens.style.height = '45px'; }
                     humanTrajectory.push(mode);
-                    logTrack('HUMAN_FOCUS', `TRACK -> ${label}`);
+                    logTrack('BUS_READ', `DRIVE -> ${label}`);
                 });
 
                 block.addEventListener('mouseleave', () => {
@@ -291,14 +290,12 @@
             for (let i = matrixContainer.children.length; i >= 0; i--) {
                 matrixContainer.appendChild(matrixContainer.children[Math.random() * i | 0]);
             }
-            // Temporarily spike cross-fade audio on spatial block mutations
             blockAudioNodes.forEach(node => {
-                const currentGain = node.gainNode.gain.value;
-                node.gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
-                node.gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+                node.gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
+                node.gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
             });
             const modeTrack = clickedBlock.getAttribute('data-mode').toUpperCase();
-            logTrack('MUTATION', `OPERATOR INTERVENTION // TARGET [${modeTrack}]`);
+            logTrack('HARDWARE_MUTATE', `SECTOR RESET // TARGET [${modeTrack}]`);
         }
 
         function logTrack(agent, detail) {
@@ -319,7 +316,7 @@
             } else {
                 titleElement.innerText = "KARIN SCHNEIDER";
             }
-            logTrack('SYSTEM', 'VISUAL INVERSION TRIGGERED');
+            logTrack('SYS_INVERT', 'POLARITY INVERSION EFFECTED');
         }
     </script>
 </body>
