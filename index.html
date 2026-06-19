@@ -356,7 +356,7 @@
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
             <span id="cluster-cd" style="font-family:monospace;font-size:9px;opacity:0.4;letter-spacing:1px;"></span>
-            <button class="btn admin-only" onclick="toggleReg()">+ UPLOAD</button>
+            <button class="btn admin-only" onclick="toggleReg()" style="display:none;">+ UPLOAD</button>
             <button class="btn" onclick="closeCluster()">← COMMONS</button>
         </div>
     </div>
@@ -637,7 +637,7 @@ function renderMain() {
 
         wrap.onclick = () => {
             if (wrap._dragged) { wrap._dragged=false; return; }
-            if (maker.accessCode && maker.accessCode !== '') {
+            if (!isAdmin && maker.accessCode && maker.accessCode !== '') {
                 const pass = prompt('Enter access code:');
                 if (!pass || pass.trim() !== maker.accessCode.trim()) { alert('INVALID CODE'); return; }
             }
@@ -1059,10 +1059,13 @@ function secretHandshake(){
     if(entry.trim().toLowerCase()===STUDIO_CODE){
         isAdmin=true;
         document.body.classList.add('admin-active');
+        // force show all admin-only elements including cluster upload
+        document.querySelectorAll('.admin-only').forEach(el=>el.style.display='inline-block');
         log('ADMIN // ACTIVE');
     } else {
         isAdmin=false;
         document.body.classList.remove('admin-active');
+        document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');
     }
     renderMain();
     if(currentMaker)renderCluster();
