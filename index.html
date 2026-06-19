@@ -2,986 +2,1101 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Karin Schneider | System Index</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>COMMONS ON DEMAND | 24H</title>
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
     <style>
-        :root { --bg: #ffffff; --text: #000000; --accent: #666666; --border: #dddddd; }
-        body.dark-mode { --bg: #000000; --text: #ffffff; --accent: #999999; --border: #333333; }
-        
+        :root { 
+            --bg: #000000; 
+            --text: #ffffff; 
+            --accent: #cccccc;
+            --border: #333333;
+            --pink: #c45c7a;
+            --yellow: #d4c84a;
+            --grey: #888888;
+            --view-bg: #000000;
+        }
+        body.light-mode { 
+            --bg: #ffffff; 
+            --text: #000000; 
+            --accent: #333333;
+            --border: #dddddd;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body { 
-            background-color: var(--bg); color: var(--text); 
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
             -webkit-font-smoothing: antialiased;
-            margin: 40px; padding-bottom: 60px;
-            font-size: 13px; line-height: 1.5; letter-spacing: -0.01em; 
-            transition: background-color 0.2s, color 0.2s;
-            position: relative; min-height: calc(100vh - 80px);
-            box-sizing: border-box;
+            background-color: var(--bg); 
+            color: var(--text); 
+            overflow: hidden;
+            width: 100vw; height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
         }
-        
-        header { margin-bottom: 40px; border-bottom: 2px solid var(--text); padding-bottom: 20px; }
-        .header-top { display: flex; justify-content: space-between; align-items: baseline; }
-        .title { font-size: 20px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; }
-        
-        /* ── CONSOLE SWITCHBOARD (added, non-disruptive) ── */
-        #switchboard {
-            font-family: "Courier New", Courier, monospace;
-            font-size: 11px;
-            margin-bottom: 18px;
-            border: 1px solid var(--border);
-            padding: 12px 16px;
+
+        /* HEADER */
+        #header {
+            position: fixed; top: 0; left: 0; right: 0;
+            padding: 20px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100;
+            pointer-events: none;
         }
-        #switchboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-            font-size: 10px;
-            letter-spacing: 0.15em;
-            text-transform: uppercase;
+        #header > * { pointer-events: auto; }
+
+        .title { 
+            font-size: 13px; font-weight: bold; letter-spacing: 3px; 
+            text-transform: uppercase; cursor: pointer; user-select: none;
+            color: var(--text);
         }
-        .sb-master {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 10px;
-            align-items: center;
+
+        .btn { 
+            background: none; border: 1px solid var(--text); color: var(--text);
+            padding: 4px 10px; font-size: 9px; cursor: pointer; text-transform: uppercase;
+            transition: 0.2s; letter-spacing: 1px; font-weight: bold;
         }
-        .sb-master-label { color: var(--accent); }
-        .sb-node {
+        .btn:hover { background: var(--text); color: var(--bg); }
+        .btn.active { background: var(--text); color: var(--bg); }
+
+        /* FLOATING CANVAS */
+        #canvas {
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            overflow: hidden;
+        }
+
+        /* IDENTITY SHAPES — circles (makers) and ovals (curators) */
+        .identity-wrap {
+            position: absolute; cursor: pointer; user-select: none;
+        }
+        .identity-inner {
+            width: 100%; height: 100%;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.2s;
+        }
+        .identity-inner:hover { opacity: 0.65; }
+        .identity-circle { border-radius: 50%; border: 1px solid var(--pink); }
+        .identity-oval   { border-radius: 50%; border: 1px solid var(--yellow); }
+        .identity-initials {
+            font-size: 10px; font-weight: bold; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--text); opacity: 0.85;
+            pointer-events: none;
+        }
+        .identity-name {
+            position: absolute; bottom: -18px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+            color: var(--accent); opacity: 0.45; white-space: nowrap;
+            pointer-events: none;
+        }
+        .identity-cd {
+            position: absolute; top: -16px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 7px; font-family: monospace; letter-spacing: 1px;
+            color: var(--accent); opacity: 0.45; white-space: nowrap;
+            pointer-events: none;
+        }
+        .identity-cd.urgent { color: #ff4444; opacity: 1; }
+
+        /* WORK SHAPES — exactly as original DATAROOM */
+        .shape-wrap {
+            position: absolute;
             cursor: pointer;
-            user-select: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
+            transition: opacity 0.3s;
         }
-        .sb-node:hover { color: var(--accent); }
-        #museum-strip {
-            display: flex;
-            gap: 22px;
-            flex-wrap: wrap;
-            align-items: flex-start;
+        .shape-wrap:hover { opacity: 0.75; }
+        .shape-wrap.expired { opacity: 0.2; pointer-events: none; }
+
+        .shape-video {
+            border: 1px solid var(--pink);
+            background: transparent;
         }
-        .museum-col { font-size: 10px; }
-        .museum-col-name { color: var(--accent); margin-bottom: 3px; letter-spacing: 0.1em; }
-        .museum-ch { display: flex; gap: 10px; }
-        .ch-btn {
-            cursor: pointer;
-            user-select: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
+        .shape-performance {
+            border: 1px solid var(--pink);
+            border-radius: 50%;
+            background: transparent;
         }
-        .ch-btn:hover { color: var(--accent); }
-        .cors-tag {
-            display: none;
-            color: #ff3300;
-            font-size: 9px;
-            animation: blink 1s step-end infinite;
+        .shape-sound {
+            border: 1px solid var(--grey);
+            background: transparent;
         }
-        .cors-tag.on { display: inline; }
-        @keyframes blink { 50% { opacity: 0; } }
-        .sb-global { display: flex; gap: 16px; margin-top: 10px; }
-        .sb-global span { cursor: pointer; color: var(--accent); }
-        .sb-global span:hover { color: var(--text); }
- 
-        /* gate operators */
-        #gate-row {
-            font-family: "Courier New", Courier, monospace;
-            font-size: 11px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 18px;
+        .shape-code {
+            border: 1px solid var(--pink);
+            background: transparent;
         }
-        .gate-op {
-            cursor: pointer;
-            border: 1px solid var(--border);
-            padding: 2px 8px;
-            color: var(--accent);
-            user-select: none;
-            transition: all 0.15s;
+        .shape-image {
+            border: 1px solid var(--grey);
+            background: transparent;
         }
-        .gate-op:hover { border-color: var(--text); color: var(--text); }
-        .gate-op.fired { border-color: var(--text); color: var(--text); }
- 
-        .mode-toggle { 
-            border: 1px solid var(--text); background: none; padding: 4px 12px; 
-            cursor: pointer; font-size: 11px; text-transform: uppercase; 
-            font-weight: 500; color: var(--text); transition: all 0.2s;
-        }
-        .mode-toggle:hover { background: var(--text); color: var(--bg); }
-        
-        #grid-matrix { 
-            display: grid; grid-template-columns: repeat(12, 1fr); auto-rows: 140px; 
-            gap: 15px; width: 100%; margin-bottom: 60px;
-        }
-        
-        .block { 
-            border: 1px solid var(--text); position: relative; 
-            display: flex; flex-direction: column; justify-content: flex-end; 
-            padding: 15px; cursor: pointer; overflow: hidden; background: var(--bg);
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.3s;
-        }
-        .block:hover { border-color: var(--accent); transform: scale(1.01); }
-        
-        .asset-img { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: cover; opacity: 0; transition: opacity 0.4s, filter 0.3s; 
-            z-index: 1; pointer-events: none;
-        }
-        .asset-img.revealed { opacity: 0.85; }
-        .block:hover .asset-img.revealed { opacity: 1; filter: invert(1) contrast(1.2); }
-        
-        .generative-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
-        
-        .identity-label { 
-            position: relative; font-size: 10px; font-weight: bold; 
-            letter-spacing: 0.05em; background: var(--bg); color: var(--text);
-            padding: 4px 8px; display: inline-block; max-width: 100%;
+
+        /* Title centered in shape */
+        .shape-title {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+            color: var(--text); opacity: 0.55;
+            pointer-events: none; text-align: center;
+            width: calc(100% - 20px);
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            border: 1px solid var(--text); z-index: 5; margin-top: auto;
         }
- 
-        #ledger-container {
-            font-family: monospace; font-size: 10px; color: var(--accent);
-            line-height: 1.5; margin-bottom: 20px; display: flex; flex-direction: column;
+
+        .shape-label {
+            position: absolute;
+            bottom: 10px; left: 12px;
+            font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+            color: var(--text); opacity: 0.4;
+            pointer-events: none;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: calc(100% - 80px);
         }
-        .ledger-line { display: flex; gap: 6px; }
-        .ledger-line .l-ts   { color: var(--border); flex-shrink: 0; }
-        .ledger-line .l-agent { flex-shrink: 0; min-width: 100px; }
-        .ledger-line .l-agent.raw  { color: #00cc66; }
-        .ledger-line .l-agent.goog { color: #ccaa00; }
-        .ledger-line .l-agent.cors { color: #ff3300; }
-        .ledger-line .l-agent.ling { color: #6688ff; }
-        .ledger-line .l-detail { word-break: break-all; }
- 
-        #audio-prompt {
-            border: 1px dashed var(--text); padding: 20px; margin-bottom: 25px;
-            color: var(--text); display: flex; justify-content: center; 
-            align-items: center; font-size: 12px; letter-spacing: 2px; 
-            font-weight: bold; cursor: pointer; text-transform: uppercase;
+
+        .shape-countdown {
+            position: absolute;
+            top: 10px; right: 10px;
+            font-size: 8px; letter-spacing: 1px;
+            color: var(--accent); opacity: 0.6;
+            font-family: monospace;
+            pointer-events: none;
         }
- 
-        #orbital-lens { 
-            position: fixed; width: 30px; height: 30px; background: var(--text); 
-            border-radius: 50%; pointer-events: none; z-index: 100; 
-            transform: translate(-50%, -50%); transition: width 0.2s, height 0.2s, background-color 0.3s; 
-            mix-blend-mode: difference; 
+        .shape-countdown.urgent { color: #ff4444; opacity: 1; }
+
+        .shape-actions {
+            position: absolute; top: 8px; left: 8px;
+            display: none; gap: 6px;
         }
- 
-        /* VU strip */
-        #vu-strip {
+        body.admin-active .shape-actions { display: flex; }
+        .shape-action-btn {
+            font-size: 13px; cursor: pointer; opacity: 0.4;
+            color: var(--text); transition: 0.2s;
+            background: none; border: none; padding: 0;
+        }
+        .shape-action-btn:hover { opacity: 1; }
+        .shape-del-btn:hover { color: #ff0000; }
+
+        /* CLUSTER VIEW */
+        #cluster-view {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--bg); z-index: 200; display: none; overflow: hidden;
+        }
+        #cluster-header {
+            position: fixed; top: 0; left: 0; right: 0;
+            padding: 20px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 300; pointer-events: none;
+        }
+        #cluster-header > * { pointer-events: auto; }
+        #cluster-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; overflow: hidden; }
+        .cluster-name { font-size: 11px; font-weight: bold; letter-spacing: 3px; text-transform: uppercase; color: var(--text); }
+        .cluster-sub  { font-size: 8px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent); opacity: 0.4; margin-top: 3px; }
+
+        /* PROFILE OVERLAY */
+        #profile-section {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.92); z-index: 5000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(8px);
+        }
+        body.light-mode #profile-section { background: rgba(255,255,255,0.92); }
+
+        /* BOTTOM BAR */
+        #bottom-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
-            height: 2px; z-index: 200;
-            background: var(--bg);
+            padding: 14px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100;
+            font-family: monospace; font-size: 9px;
+            color: var(--accent);
+            pointer-events: none;
         }
-        #vu-bar {
-            height: 100%;
-            width: 0%;
-            background: #00cc66;
-            transition: width 0.07s, background 0.3s;
+        #bottom-bar > * { pointer-events: auto; }
+        #console-display { opacity: 0.5; }
+        .db-controls { display: flex; gap: 20px; }
+        .db-controls span { cursor: pointer; opacity: 0.4; transition: 0.2s; }
+        .db-controls span:hover { opacity: 1; }
+
+        /* LEGEND */
+        #legend {
+            position: fixed; bottom: 36px; right: 30px;
+            display: flex; flex-direction: column; gap: 8px;
+            z-index: 100; pointer-events: none;
         }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); opacity: 0.3; }
+        .leg-circle { width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--pink); flex-shrink: 0; }
+        .leg-oval   { width: 18px; height: 11px; border-radius: 50%; border: 1px solid var(--yellow); flex-shrink: 0; }
+
+        /* REGISTRATION OVERLAY — original DATAROOM form */
+        #reg-section { 
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.92); z-index: 5000;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(8px);
+        }
+        body.light-mode #reg-section { background: rgba(255,255,255,0.92); }
+
+        .form-container { 
+            width: 90%; max-width: 580px; padding: 28px; 
+            border: 1px solid var(--text); background: var(--bg); 
+            position: relative; max-height: 90vh; overflow-y: auto;
+        }
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        label { font-size: 9px; text-transform: uppercase; color: var(--accent); margin-bottom: 3px; display: block; letter-spacing: 1px; font-weight: bold; }
+        input, select, textarea { 
+            background: none; border: 1px solid var(--border); padding: 7px 8px; 
+            color: var(--text); font-size: 11px; width: 100%;
+            font-family: inherit; border-radius: 0; outline: none;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--text); }
+        textarea { grid-column: span 2; height: 48px; resize: none; }
+        .form-close {
+            position: absolute; top: 12px; right: 16px; cursor: pointer;
+            font-size: 22px; color: var(--text); opacity: 0.4; transition: 0.2s;
+        }
+        .form-close:hover { opacity: 1; }
+
+        #form-preview-container {
+            grid-column: span 2; height: 110px; background: #111; border: 1px solid var(--border);
+            display: flex; justify-content: center; align-items: center; margin-bottom: 4px;
+            overflow: hidden;
+        }
+        body.light-mode #form-preview-container { background: #eee; }
+        #form-preview-container img, #form-preview-container video { max-height: 100%; max-width: 100%; object-fit: contain; }
+
+        /* VIEWING ROOM */
+        #viewing-room {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: var(--view-bg); z-index: 6000; display: none;
+            justify-content: center; align-items: center;
+        }
+        #media-container { 
+            width: 100%; height: 100%; display: flex; 
+            justify-content: center; align-items: center; 
+            padding: 80px; 
+        }
+        .video-js { width: 100% !important; height: 100% !important; }
+
+        .view-controls { 
+            position: absolute; top: 24px; right: 24px; z-index: 7000; 
+            display: flex; gap: 8px; align-items: center; 
+        }
+        .bg-toggle { width: 16px; height: 16px; border: 1px solid rgba(128,128,128,0.4); cursor: pointer; transition: 0.2s; }
+        .bg-toggle.black { background: #000; }
+        .bg-toggle.white { background: #fff; }
+        .bg-toggle.grey  { background: #888; }
+        .bg-toggle:hover { transform: scale(1.2); }
+        .close-btn { 
+            background: var(--text); color: var(--bg); border: none; 
+            padding: 8px 16px; font-size: 10px; font-weight: bold; 
+            cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-left: 16px; 
+        }
+
+        /* INVITE OVERLAY */
+        #invite-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.92); z-index: 5500;
+            display: none; justify-content: center; align-items: center;
+            backdrop-filter: blur(8px);
+        }
+        .invite-box {
+            width: 90%; max-width: 500px;
+            border: 1px solid var(--text); background: var(--bg);
+            padding: 28px; position: relative;
+        }
+        .invite-box h3 { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+        .invite-msg {
+            font-family: monospace; font-size: 11px; line-height: 1.7;
+            border: 1px solid var(--border); padding: 12px;
+            color: var(--accent); margin-bottom: 14px;
+            white-space: pre-wrap; word-break: break-all;
+        }
+        .invite-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .admin-only { display: none; }
+        body.admin-active .admin-only { display: inline-block; }
     </style>
 </head>
-<body class="dark-mode">
- 
-    <header>
-        <div class="header-top">
-            <div class="title" id="main-name">K.ari.n Schneider</div>
-            <button class="mode-toggle" onclick="toggleMode()">Invert System</button>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+    <div class="title" onclick="secretHandshake()">COMMONS ON DEMAND</div>
+    <div style="display:flex; gap:8px; align-items:center;">
+        <span id="live-count" style="font-size:9px; letter-spacing:1px; opacity:0.4; font-family:monospace;"></span>
+        <button class="btn admin-only" id="profile-btn" onclick="openProfileForm()">+ CREATE PROFILE</button>
+        <button class="btn admin-only" id="upload-btn" onclick="toggleReg()" style="display:none !important;">+ UPLOAD</button>
+        <button class="btn" onclick="toggleMode()">◐</button>
+    </div>
+</div>
+
+<!-- MAIN CANVAS -->
+<div id="canvas"></div>
+
+<!-- LEGEND -->
+<div id="legend">
+    <div class="legend-item"><div class="leg-circle"></div> maker</div>
+    <div class="legend-item"><div class="leg-oval"></div> curator</div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bottom-bar">
+    <div id="console-display">COMMONS_ON_DEMAND // 24H</div>
+    <div class="db-controls">
+        <span class="admin-only" onclick="exportData()">EXPORT</span>
+        <span class="admin-only" onclick="importData()">IMPORT</span>
+    </div>
+</div>
+
+<!-- CLUSTER VIEW -->
+<div id="cluster-view">
+    <div id="cluster-header">
+        <div>
+            <div class="cluster-name" id="cluster-name-el">—</div>
+            <div class="cluster-sub"  id="cluster-role-el">MAKER</div>
         </div>
-    </header>
- 
-    <!-- SWITCHBOARD CONSOLE -->
-    <div id="switchboard">
-        <div id="switchboard-header">
-            <span>⬡ CONSOLE — INSTITUTIONAL NETWORK ROUTER</span>
-            <span style="font-size:9px">CORS=AUDIBLE&nbsp;&nbsp;RAW=LIVE&nbsp;&nbsp;GOOG=CDN BYTES</span>
-        </div>
-        <div class="sb-master">
-            <span class="sb-master-label">MASTER:</span>
-            <span class="sb-node" onclick="setMaster('raw')"><span id="m-raw">(•)</span> RAW</span>
-            <span class="sb-node" onclick="setMaster('goog')"><span id="m-goog">( )</span> GOOG</span>
-            <span class="sb-node" onclick="setMaster('mute')"><span id="m-mute">( )</span> [MUTE]</span>
-        </div>
-        <div id="museum-strip">
-            <!-- injected after boot -->
-        </div>
-        <div class="sb-global">
-            <span onclick="globalOverride('all')">──► [OPEN ALL]</span>
-            <span onclick="globalOverride('mute')">──► [CLOSE ALL]</span>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <span id="cluster-cd" style="font-family:monospace;font-size:9px;opacity:0.4;letter-spacing:1px;"></span>
+            <button class="btn admin-only" onclick="toggleReg()">+ UPLOAD</button>
+            <button class="btn" onclick="closeCluster()">← COMMONS</button>
         </div>
     </div>
- 
-    <!-- GATE OPERATORS -->
-    <div id="gate-row">
-        <span class="gate-op" onclick="gateOp('scatter')">◈ SCATTER</span>
-        <span class="gate-op" onclick="gateOp('stack')">◧ STACK</span>
-        <span class="gate-op" onclick="gateOp('wide')">◫ WIDE</span>
-        <span class="gate-op" onclick="gateOp('dense')">⊞ DENSE</span>
-        <span class="gate-op" onclick="gateOp('reverse')">⇌ REVERSE</span>
-        <span class="gate-op" onclick="gateOp('shuffle')">⟳ SHUFFLE</span>
-        <span class="gate-op" onclick="gateOp('tall')">⊟ TALL</span>
+    <div id="cluster-canvas"></div>
+</div>
+
+<!-- PROFILE OVERLAY -->
+<div id="profile-section" onclick="if(event.target.id==='profile-section')closeProfileForm()">
+    <div class="form-container" onclick="event.stopPropagation()">
+        <div class="form-close" onclick="closeProfileForm()">×</div>
+        <h2 id="profile-title" style="font-size:10px;text-transform:uppercase;margin-bottom:16px;letter-spacing:2px;">Create Profile</h2>
+        <form id="profileForm" class="grid-form">
+            <input type="hidden" id="profile-id">
+            <div style="grid-column:span 2;">
+                <label>Name</label>
+                <input type="text" id="p-name" placeholder="Your name" required>
+            </div>
+            <div>
+                <label>Initials</label>
+                <input type="text" id="p-initials" placeholder="KS" maxlength="3">
+            </div>
+            <div>
+                <label>Role</label>
+                <select id="p-role">
+                    <option value="maker">Maker / Artist</option>
+                    <option value="curator">Curator / Program</option>
+                </select>
+            </div>
+            <div style="grid-column:span 2;">
+                <label>Access code (optional)</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="p-code" placeholder="e.g. WAVE24" style="flex:1;">
+                    <button type="button" class="btn" onclick="generateCode('p-code')" style="white-space:nowrap;">GENERATE</button>
+                </div>
+            </div>
+            <button type="submit" id="profile-submit" class="btn" style="grid-column:span 2;margin-top:8px;padding:10px;font-size:10px;">CREATE PROFILE — 24H CLOCK STARTS</button>
+            <button type="button" class="btn" onclick="closeProfileForm()" style="grid-column:span 2;border:none;opacity:0.3;font-size:10px;">CANCEL</button>
+        </form>
     </div>
- 
-    <div id="audio-prompt" onclick="activateSystem()">[ Initialize Electromagnetic Acoustic Matrix ]</div>
-    
-    <div id="ledger-container">
-        <div class="ledger-line"><span class="l-agent">[SIGNAL RECEPTOR IDLE]</span><span class="l-detail">// EXPECTING TRANSACTIONS</span></div>
+</div>
+
+<!-- WORK UPLOAD OVERLAY — original DATAROOM form, unchanged -->
+<div id="reg-section" onclick="handleBgClick(event)">
+    <div class="form-container" onclick="event.stopPropagation()">
+        <div class="form-close" onclick="toggleReg()">×</div>
+        <h2 id="form-title" style="font-size:10px; text-transform:uppercase; margin-bottom:16px; letter-spacing:2px;">Upload Work — 24H</h2>
+        
+        <div id="form-preview-container">
+            <span style="font-size:9px; opacity:0.3; font-family:monospace;">PREVIEW</span>
+        </div>
+
+        <form id="archiveForm" class="grid-form">
+            <input type="hidden" id="editing-id">
+            <input type="hidden" id="upload-time">
+
+            <div>
+                <label>Year</label>
+                <input type="text" id="year" placeholder="2025" required>
+            </div>
+            <div>
+                <label>Mode</label>
+                <select id="mode">
+                    <option value="VIDEO">VIDEO</option>
+                    <option value="PERFORMANCE">PERFORMANCE</option>
+                    <option value="SOUND">SOUND</option>
+                    <option value="WWW">WWW</option>
+                    <option value="IMAGE">IMAGE</option>
+                </select>
+            </div>
+
+            <div style="grid-column:span 2;">
+                <label>Title</label>
+                <input type="text" id="title" placeholder="Title of work" required>
+            </div>
+
+            <div style="grid-column:span 2;">
+                <label>Artist</label>
+                <input type="text" id="artist" placeholder="Your name">
+            </div>
+
+            <textarea id="materials" placeholder="Notes / description (optional)"></textarea>
+
+            <div style="grid-column:span 2;">
+                <label>File path or URL (Backblaze / Dropbox / direct link)</label>
+                <input type="text" id="manualPath" placeholder="media/video.mp4 or https://...">
+            </div>
+
+            <div style="grid-column:span 2;">
+                <label>URL Link (for WWW entries)</label>
+                <input type="text" id="linkUrl" placeholder="https://yourproject.com">
+            </div>
+
+            <div style="grid-column:span 2;">
+                <label>Viewer access code</label>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="accessCode" placeholder="e.g. WAVE24" style="flex:1;">
+                    <button type="button" class="btn" onclick="generateCode('accessCode')" style="white-space:nowrap;">GENERATE</button>
+                </div>
+            </div>
+
+            <div style="grid-column:span 2;">
+                <label>Upload file (auto-fills path)</label>
+                <input type="file" id="mediaFile" style="border:none; padding:0; font-size:10px;" onchange="handleFileSelection(this)">
+            </div>
+
+            <button type="submit" id="submit-btn" class="btn" style="grid-column:span 2; margin-top:8px; padding:10px; font-size:10px;">COMMIT — 24H CLOCK STARTS NOW</button>
+            <button type="button" class="btn" onclick="toggleReg()" style="grid-column:span 2; border:none; opacity:0.3; font-size:10px;">CANCEL</button>
+        </form>
     </div>
-    
-    <div id="grid-matrix"></div>
-    <div id="orbital-lens"></div>
-    <div id="vu-strip"><div id="vu-bar"></div></div>
- 
+</div>
+
+<!-- VIEWING ROOM -->
+<div id="viewing-room">
+    <div class="view-controls">
+        <div class="bg-toggle black" onclick="setViewBg('#000000')"></div>
+        <div class="bg-toggle white" onclick="setViewBg('#ffffff')"></div>
+        <div class="bg-toggle grey"  onclick="setViewBg('#888888')"></div>
+        <button class="close-btn" onclick="closeRoom()">CLOSE</button>
+    </div>
+    <div id="media-container"></div>
+</div>
+
+<!-- INVITE OVERLAY -->
+<div id="invite-overlay" onclick="closeInvite(event)">
+    <div class="invite-box" onclick="event.stopPropagation()">
+        <div class="form-close" onclick="document.getElementById('invite-overlay').style.display='none'">×</div>
+        <h3>Invite to Watch</h3>
+        <div class="invite-msg" id="invite-text"></div>
+        <div class="invite-actions">
+            <button class="btn" onclick="copyInvite()">COPY</button>
+            <button class="btn" onclick="emailInvite()">SEND BY EMAIL</button>
+            <button class="btn" onclick="document.getElementById('invite-overlay').style.display='none'">CLOSE</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 <script>
-/* ═══════════════════════════════════════════════
-   KARIN SCHNEIDER — BIOSOUND CONSOLE
-   Base: your original working code (doc 3)
-   Added:
-     1. RAW probe → true latency → frequency (no clamp)
-     2. GOOG route → CDN byte values → grain oscillators
-     3. CLICK text → char codes + consonant clusters → partials
-     4. Gate operators → structural layout mutation
-     5. CORS → named audible burst + blinking badge
-   No Math.random() in any audio path.
-   No redesign of your CSS or HTML structure.
-═══════════════════════════════════════════════ */
- 
-/* ── YOUR ORIGINAL GLOBALS ── */
-let audioCtx = null;
-let serverAirFilter = null;
-let activeNodeSignals = new Map();
-let blockAudioNodes = [];
-const matrixContainer = document.getElementById('grid-matrix');
-const ledgerContainer = document.getElementById('ledger-container');
-const lens = document.getElementById('orbital-lens');
-let humanTrajectory = [];
- 
-/* ── NEW GLOBALS ── */
-let masterMode = 'raw';
-let masterGainNode = null;  /* pre-master: all sources feed here */
-let outputGainNode = null;  /* true output: only this connects to destination, MUTE controls this */
-let channelNodes = {};
-let googByteCache = {};
-let googTickInterval = null;
-let corsProbeCache = {};
-let booted = false;
-let vuRafId = null;
- 
-const MUSEUMS = {
-    whitney:  { label: 'WHITNEY',  raw: true,  goog: false,
-                rawUrl:  'https://whitney.org/favicon.ico',
-                googUrl: 'https://www.googletagmanager.com/gtm.js' },
-    pompidou: { label: 'POMPIDOU', raw: false, goog: true,
-                rawUrl:  'https://www.centrepompidou.fr/favicon.ico',
-                googUrl: 'https://www.googletagmanager.com/gtm.js' },
-    sztuki:   { label: 'SZTUKI',   raw: true,  goog: false,
-                rawUrl:  'https://msl.org.pl/favicon.ico',
-                googUrl: 'https://www.google-analytics.com/analytics.js' },
-    mamsp:   { label: 'MAM SP',  raw: false, goog: true,
-                rawUrl:  'https://mam.org.br/favicon.ico',
-                googUrl: 'https://www.googletagmanager.com/gtag/js' },
-    museomoderno:  { label: 'MUSEOMODERNO',  raw: false, goog: true,
-                rawUrl:  'https://museomoderno.org/favicon.ico',
-                googUrl: 'https://www.googletagmanager.com/gtag/js' },
-    mmsurijeka:   { label: 'MMSURIJEKA',   raw: true,  goog: false,
-                rawUrl:  'https://mmsu.hr/favicon.ico',
-                googUrl: 'https://www.google-analytics.com/ga.js' }
-};
- 
-const BASE_FREQ  = { whitney:55, pompidou:82.4, sztuki:110, mamsp:164.8, museomoderno:220, mmsurijeka:329.6 };
-const WAVE_TYPE  = { whitney:'sine', pompidou:'triangle', sztuki:'sawtooth', mamsp:'triangle', museomoderno:'sine', mmsurijeka:'sawtooth' };
- 
-const VOWELS = new Set('aeiouAEIOU');
-const CONSONANT_RE = /[bcdfghjklmnpqrstvwxyz]{2,}/gi;
- 
-/* ════════════════════════ YOUR ORIGINAL: activateSystem ════════════════════════ */
-function activateSystem() {
-    if (booted) return;
-    booted = true;
-    document.getElementById('audio-prompt').style.display = 'none';
- 
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
- 
-    /* outputGainNode is the ONLY node connected to destination.
-       MUTE sets this to 0 — everything upstream goes silent regardless
-       of how many nodes connect to masterGainNode. */
-    outputGainNode = audioCtx.createGain();
-    outputGainNode.gain.setValueAtTime(1.0, audioCtx.currentTime);
-    outputGainNode.connect(audioCtx.destination);
- 
-    masterGainNode = audioCtx.createGain();
-    masterGainNode.gain.setValueAtTime(0.28, audioCtx.currentTime);
-    masterGainNode.connect(outputGainNode);
- 
-    /* ── YOUR ORIGINAL: 60Hz datacenter ground hum ── */
-    const subHum  = audioCtx.createOscillator();
-    const subGain = audioCtx.createGain();
-    subHum.type = 'sine';
-    subHum.frequency.setValueAtTime(60, audioCtx.currentTime);
-    subGain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-    subHum.connect(subGain);
-    subGain.connect(masterGainNode);
-    subHum.start();
- 
-    /* ── YOUR ORIGINAL: server air filter noise ── */
-    const bufferSize  = audioCtx.sampleRate * 2;
-    const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const output      = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
-    serverAirFilter = audioCtx.createBiquadFilter();
-    serverAirFilter.type = 'bandpass';
-    serverAirFilter.frequency.setValueAtTime(650, audioCtx.currentTime);
-    serverAirFilter.Q.setValueAtTime(1.0, audioCtx.currentTime);
-    const airSrc  = audioCtx.createBufferSource();
-    airSrc.buffer = noiseBuffer;
-    airSrc.loop   = true;
-    const airGain = audioCtx.createGain();
-    airGain.gain.setValueAtTime(0.008, audioCtx.currentTime);
-    airSrc.connect(serverAirFilter);
-    serverAirFilter.connect(airGain);
-    airGain.connect(masterGainNode);
-    airSrc.start();
- 
-    /* ── NEW: build switchboard UI + pipelines ── */
-    buildSwitchboardUI();
-    buildChannelPipelines();
-    startVU();
- 
-    logTrack('HARDWARE', 'BUS TERMINALS OPEN — LIVE NETWORK ROUTING ACTIVE');
-    loadRepository();
-}
- 
-/* ════════════════════════ SWITCHBOARD UI ════════════════════════ */
-function buildSwitchboardUI() {
-    const strip = document.getElementById('museum-strip');
-    strip.innerHTML = Object.entries(MUSEUMS).map(([id, m]) => `
-        <div class="museum-col" id="cell-${id}">
-            <div class="museum-col-name">[${m.label}] <span class="cors-tag" id="cors-${id}">CORS!</span></div>
-            <div class="museum-ch">
-                <span class="ch-btn" onclick="toggleChannel('${id}','raw')">
-                    <span id="${id}-raw">${m.raw?'(•)':'( )'}</span> RAW
-                </span>
-                <span class="ch-btn" onclick="toggleChannel('${id}','goog')">
-                    <span id="${id}-goog">${m.goog?'(•)':'( )'}</span> GOOG
-                </span>
-            </div>
-        </div>
-    `).join('');
-}
- 
-/* ════════════════════════ CHANNEL PIPELINES ════════════════════════ */
-function buildChannelPipelines() {
-    Object.entries(MUSEUMS).forEach(([id, m]) => {
-        const chGain = audioCtx.createGain();
-        chGain.gain.setValueAtTime(0, audioCtx.currentTime);
-        chGain.connect(masterGainNode);
- 
-        /* RAW oscillator — frequency driven by true network latency */
-        const osc = audioCtx.createOscillator();
-        osc.type = WAVE_TYPE[id];
-        osc.frequency.setValueAtTime(BASE_FREQ[id], audioCtx.currentTime);
-        osc.connect(chGain);
-        osc.start();
- 
-        /* CORS burst oscillator — fires a square pulse on rejection */
-        const corsOsc = audioCtx.createOscillator();
-        corsOsc.type = 'square';
-        corsOsc.frequency.setValueAtTime(3200, audioCtx.currentTime);
-        const corsEnv = audioCtx.createGain();
-        corsEnv.gain.setValueAtTime(0, audioCtx.currentTime);
-        corsOsc.connect(corsEnv);
-        corsEnv.connect(masterGainNode);
-        corsOsc.start();
- 
-        channelNodes[id] = { chGain, osc, corsEnv, googGrainIdx: 0 };
- 
-        fireProbe(id);
-    });
- 
-    applyChannelGains();
-}
- 
-/* ── RAW PROBE: true latency → frequency, no clamping ── */
-function fireProbe(id) {
-    if (!audioCtx) return;
-    const m   = MUSEUMS[id];
-    const url = m.rawUrl + '?_=' + (performance.now() | 0);
-    const t0  = performance.now();
-    const img = new Image();
- 
-    img.onload = () => {
-        onProbeResult(id, performance.now() - t0, false);
-        scheduleNextProbe(id);
-    };
-    img.onerror = () => {
-        onProbeResult(id, performance.now() - t0, true);
-        scheduleNextProbe(id);
-    };
-    img.src = url;
-}
- 
-function scheduleNextProbe(id) {
-    /* Interval derived from wall-clock, not Math.random */
-    const delay = 800 + ((performance.now() * 7919) % 500 | 0);
-    setTimeout(() => fireProbe(id), delay);
-}
- 
-function onProbeResult(id, latencyMs, isError) {
-    const m  = MUSEUMS[id];
-    const cn = channelNodes[id];
-    if (!cn) return;
- 
-    /* Always cache the latency — used when channel is toggled on mid-session */
-    cn.lastLatencyMs = latencyMs;
- 
-    if (isError) {
-        /* CORS/error → audible square burst regardless of which channel is active */
-        if (!corsProbeCache[id]) {
-            corsProbeCache[id] = true;
-            const badge = document.getElementById(`cors-${id}`);
-            if (badge) badge.classList.add('on');
-        }
-        if (masterMode !== 'mute') {
-            const now = audioCtx.currentTime;
-            cn.corsEnv.gain.cancelScheduledValues(now);
-            cn.corsEnv.gain.setValueAtTime(0.04, now);
-            cn.corsEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
-        }
-        logTrack('CORS', `BLOCK ← ${m.label} // ${latencyMs.toFixed(1)}ms // REJECTED`, 'cors');
-        return;
-    }
- 
-    /* RAW: latency → frequency */
-    if (masterMode === 'raw' && m.raw) {
-        const hz = BASE_FREQ[id] + (latencyMs * 0.6);
-        cn.osc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.08);
-        logTrack('RAW', `${m.label} // ${latencyMs.toFixed(2)}ms → ${hz.toFixed(1)}Hz`, 'raw');
-        /* Ensure gain is open if channel is active */
-        if (cn.chGain.gain.value < 0.001) {
-            const amp = WAVE_TYPE[id] === 'sine' ? 0.07 : 0.012;
-            cn.chGain.gain.setTargetAtTime(amp, audioCtx.currentTime, 0.1);
-        }
-    }
-}
- 
-/* ── GOOG: fetch CDN bytes → grain oscillators ── */
-async function fetchGoogBytes(id) {
-    if (googByteCache[id]) return;
-    const m = MUSEUMS[id];
+const STUDIO_CODE  = 'studio';
+const DATAROOM_URL = window.location.href.split('?')[0];
+
+// Always start logged out
+let isAdmin = false;
+
+let makers       = [];
+let archive      = [];
+let makerPos     = {};
+let workPos      = {};
+let cdTimers     = {};
+let currentMaker = null;
+let activeWork   = null;
+let vjsPlayer    = null;
+let positions    = {}; // alias for work positions on cluster canvas
+
+/* ── LOAD ── */
+async function loadArchive() {
     try {
-        await fetch(m.googUrl, { mode: 'no-cors', cache: 'no-store' });
-        /* Body is opaque (no-cors). Use URL char codes as byte source — real, not synthetic */
-        googByteCache[id] = m.googUrl.split('').map(c => c.charCodeAt(0));
-        logTrack('GOOG', `${m.label} // OPAQUE CDN — ${googByteCache[id].length} URL BYTES LOADED`, 'goog');
-    } catch (err) {
-        googByteCache[id] = (err.message || 'CORS_BLOCK').split('').map(c => c.charCodeAt(0));
-        const badge = document.getElementById(`cors-${id}`);
-        if (badge) badge.classList.add('on');
-        logTrack('CORS', `${m.label} // CDN BLOCKED — ERROR BYTES TRANSDUCED`, 'cors');
-    }
-}
- 
-function tickGoogGrain(id) {
-    if (!audioCtx || masterMode !== 'goog') return;
-    const m  = MUSEUMS[id];
-    const cn = channelNodes[id];
-    if (!m.goog || !cn) return;
-    const bytes = googByteCache[id];
-    if (!bytes || bytes.length === 0) return;
- 
-    const idx  = cn.googGrainIdx % bytes.length;
-    const byte = bytes[idx];
-    cn.googGrainIdx++;
- 
-    /* byte value (0–255) → frequency 200–8000Hz */
-    const hz = 200 + (byte / 255) * 7800;
- 
-    const gOsc = audioCtx.createOscillator();
-    gOsc.type = 'sine';
-    gOsc.frequency.setValueAtTime(hz, audioCtx.currentTime);
-    const gEnv = audioCtx.createGain();
-    gEnv.gain.setValueAtTime(0.016, audioCtx.currentTime);
-    gEnv.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.04);
-    gOsc.connect(gEnv);
-    gEnv.connect(masterGainNode); /* → outputGainNode → destination */
-    gOsc.start();
-    gOsc.stop(audioCtx.currentTime + 0.045);
-}
- 
-function startGoogLoop() {
-    if (googTickInterval) return;
-    googTickInterval = setInterval(() => {
-        if (masterMode !== 'goog') return;
-        Object.keys(MUSEUMS).forEach(async id => {
-            if (!MUSEUMS[id].goog) return;
-            if (!googByteCache[id]) await fetchGoogBytes(id);
-            tickGoogGrain(id);
-        });
-    }, 55);
-}
- 
-function stopGoogLoop() {
-    if (googTickInterval) { clearInterval(googTickInterval); googTickInterval = null; }
-}
- 
-/* ── GAINS ── */
-function applyChannelGains() {
-    if (!audioCtx) return;
- 
-    if (masterMode === 'mute') {
-        /* MUTE: silence the single true output — catches everything */
-        outputGainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
-        stopGoogLoop();
-        return;
-    }
- 
-    /* Un-mute */
-    outputGainNode.gain.setTargetAtTime(1.0, audioCtx.currentTime, 0.05);
- 
-    Object.keys(MUSEUMS).forEach(id => {
-        const m  = MUSEUMS[id];
-        const cn = channelNodes[id];
-        if (!cn) return;
- 
-        if (masterMode === 'raw') {
-            /* RAW: oscillator audible if channel has raw:true.
-               Immediately set frequency from last known latency so toggle
-               has instant audible effect — no waiting for next probe. */
-            if (m.raw) {
-                const amp = WAVE_TYPE[id] === 'sine' ? 0.07 : 0.012;
-                cn.chGain.gain.setTargetAtTime(amp, audioCtx.currentTime, 0.1);
-                /* If we have a cached latency, apply it now */
-                if (cn.lastLatencyMs !== undefined) {
-                    const hz = BASE_FREQ[id] + (cn.lastLatencyMs * 0.6);
-                    cn.osc.frequency.setTargetAtTime(hz, audioCtx.currentTime, 0.08);
-                }
+        const res = await fetch('data.json?nc=' + Date.now());
+        if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                // legacy flat format — treat all as works, no makers
+                archive = data; makers = [];
             } else {
-                cn.chGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
+                makers  = data.makers  || [];
+                archive = data.archive || [];
             }
-            /* Always silence GOOG grain channel when in RAW mode */
-            stopGoogLoop();
- 
-        } else if (masterMode === 'goog') {
-            /* GOOG: silence RAW oscillators, let grain system handle output */
-            cn.chGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-            if (m.goog) {
-                if (!googByteCache[id]) fetchGoogBytes(id);
-            }
-            startGoogLoop();
-        }
-    });
-}
- 
-/* ── CONTROLS ── */
-function setMaster(mode) {
-    masterMode = mode;
-    ['raw','goog','mute'].forEach(k => {
-        document.getElementById(`m-${k}`).textContent = k === mode ? '(•)' : '( )';
-    });
-    applyChannelGains();
-    if (mode === 'goog') Object.keys(MUSEUMS).forEach(id => { if (MUSEUMS[id].goog) fetchGoogBytes(id); });
-    logTrack('SYS', `MASTER → ${mode.toUpperCase()}`);
-}
- 
-function toggleChannel(id, type) {
-    MUSEUMS[id][type] = !MUSEUMS[id][type];
-    document.getElementById(`${id}-${type}`).textContent = MUSEUMS[id][type] ? '(•)' : '( )';
-    applyChannelGains();
-    if (type === 'goog' && MUSEUMS[id].goog) fetchGoogBytes(id);
-}
- 
-function globalOverride(action) {
-    Object.entries(MUSEUMS).forEach(([id, m]) => {
-        m.raw  = action === 'all';
-        m.goog = action === 'all';
-        ['raw','goog'].forEach(t => {
-            const el = document.getElementById(`${id}-${t}`);
-            if (el) el.textContent = m[t] ? '(•)' : '( )';
-        });
-    });
-    if (action === 'mute') { masterMode = 'mute'; document.getElementById('m-mute').textContent = '(•)'; document.getElementById('m-raw').textContent = '( )'; document.getElementById('m-goog').textContent = '( )'; }
-    applyChannelGains();
-}
- 
-/* ════════════════════════ GATE OPERATORS ════════════════════════ */
-function gateOp(op) {
-    const btn = document.querySelector(`.gate-op[onclick="gateOp('${op}')"]`);
-    if (btn) { btn.classList.add('fired'); setTimeout(() => btn.classList.remove('fired'), 350); }
- 
-    const grid   = document.getElementById('grid-matrix');
-    const blocks = [...grid.children];
- 
-    if (op === 'scatter') {
-        const cols = [2,3,4,5,6], rows = [1,2,3];
-        blocks.forEach(b => {
-            b.style.gridColumn = `span ${cols[(performance.now() * b.offsetLeft | 0) % cols.length]}`;
-            b.style.gridRow    = `span ${rows[(performance.now() * b.offsetTop  | 0) % rows.length]}`;
-        });
-    } else if (op === 'stack') {
-        blocks.forEach((b,i) => { b.style.gridColumn = `span ${(i%3===0)?5:(i%3===1)?4:3}`; b.style.gridRow = 'span 2'; });
-    } else if (op === 'wide') {
-        blocks.forEach((b,i) => { b.style.gridColumn = `span ${i%2===0?8:4}`; b.style.gridRow = 'span 1'; });
-    } else if (op === 'dense') {
-        blocks.forEach(b => { b.style.gridColumn = 'span 2'; b.style.gridRow = 'span 1'; });
-    } else if (op === 'reverse') {
-        blocks.reverse().forEach(b => grid.appendChild(b));
-    } else if (op === 'shuffle') {
-        const seed = performance.now() | 0;
-        for (let i = blocks.length - 1; i > 0; i--) {
-            const j = (seed * (i+1) * 2654435761 >>> 0) % (i+1);
-            grid.appendChild(blocks[j]);
-            blocks.splice(j, 1);
-        }
-    } else if (op === 'tall') {
-        blocks.forEach((b,i) => { b.style.gridColumn = `span ${i%4===0?6:2}`; b.style.gridRow = `span ${i%4===0?1:3}`; });
-    }
- 
-    /* Gate label string → linguistic sound */
-    playStringSound(op, 0.18);
-    logTrack('GATE', `OPERATOR:${op.toUpperCase()} // LAYOUT SHELL MUTATED`);
-}
- 
-/* ════════════════════════ LINGUISTIC SOUND ENGINE ════════════════════════ */
-/*  Each character of the clicked string → one partial oscillator.
-    No Math.random, no Math.sin — pure char code → Hz mapping.
-    Consonant clusters → square wave bursts.
-    Commas / spaces → silence gaps.                              */
-function playStringSound(str, gainScale) {
-    if (!audioCtx || masterMode === 'mute') return;
-    gainScale = gainScale || 1.0;
- 
-    const clusterSet = new Set();
-    let m; CONSONANT_RE.lastIndex = 0;
-    while ((m = CONSONANT_RE.exec(str)) !== null)
-        for (let i = m.index; i < m.index + m[0].length; i++) clusterSet.add(i);
- 
-    let t = audioCtx.currentTime + 0.01;
-    str.split('').forEach((ch, idx) => {
-        const code = ch.charCodeAt(0);
-        if (code < 32) return;
-        if (ch === ',' || ch === ' ') { t += 0.022; return; }
- 
-        const hz       = 80 + ((code - 32) / 95) * 2720;
-        const isVowel  = VOWELS.has(ch);
-        const isClust  = clusterSet.has(idx);
-        const dur      = isVowel ? 0.09 : isClust ? 0.028 : 0.05;
-        const amp      = (isClust ? 0.055 : isVowel ? 0.018 : 0.032) * gainScale;
- 
-        const osc = audioCtx.createOscillator();
-        osc.type  = isClust ? 'square' : 'sine';
-        osc.frequency.setValueAtTime(hz, t);
- 
-        const env = audioCtx.createGain();
-        env.gain.setValueAtTime(amp, t);
-        env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
- 
-        osc.connect(env);
-        env.connect(masterGainNode);
-        osc.start(t);
-        osc.stop(t + dur + 0.006);
- 
-        t += dur * 0.68;
-    });
- 
-    logTrack('LING', `${str.length} CHARS → PHONETIC STREAM`, 'ling');
-}
- 
-/* ════════════════════════ YOUR ORIGINAL: mutateSystem ════════════════════════ */
-function mutateSystem(clickedBlock) {
-    if (!audioCtx) return;
- 
-    /* YOUR ORIGINAL: random DOM reorder */
-    for (let i = matrixContainer.children.length; i >= 0; i--) {
-        matrixContainer.appendChild(matrixContainer.children[Math.random() * i | 0]);
-    }
- 
-    /* YOUR ORIGINAL: block audio burst */
-    blockAudioNodes.forEach(node => {
-        node.gainNode.gain.setValueAtTime(0.06, audioCtx.currentTime);
-        node.gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.3);
-    });
- 
-    /* NEW: clicked text → linguistic sound */
-    const txt = clickedBlock.getAttribute('data-text') || '';
-    playStringSound(txt, 0.9);
- 
-    const modeTrack = clickedBlock.getAttribute('data-mode').toUpperCase();
-    logTrack('SWIFT', `CLICK // [${modeTrack}] // "${txt.substring(0,36)}" // ${txt.length} BYTES TRANSDUCED`);
-}
- 
-/* ════════════════════════ YOUR ORIGINAL: initializePolyphonicMatrix ════════════════════════ */
-function initializePolyphonicMatrix() {
-    blockAudioNodes = [];
-    document.querySelectorAll('.block').forEach((element, idx) => {
-        const mode = element.getAttribute('data-mode');
- 
-        const gainNode = audioCtx.createGain();
-        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-        gainNode.connect(masterGainNode);
- 
-        const processorWhine = audioCtx.createOscillator();
-        processorWhine.type = 'sawtooth';
-        const baseFreq = mode === 'code' ? 9200 : 5500 + (idx * 180);
-        processorWhine.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
- 
-        const diskReadClick = audioCtx.createOscillator();
-        diskReadClick.type = 'square';
-        diskReadClick.frequency.setValueAtTime(mode === 'time-based_media' ? 14 : 38, audioCtx.currentTime);
- 
-        const clickDepth = audioCtx.createGain();
-        clickDepth.gain.setValueAtTime(3000, audioCtx.currentTime);
- 
-        diskReadClick.connect(clickDepth);
-        clickDepth.connect(processorWhine.frequency);
-        processorWhine.connect(gainNode);
- 
-        diskReadClick.start();
-        processorWhine.start();
- 
-        blockAudioNodes.push({ element, gainNode, processorWhine, baseFreq });
-    });
-}
- 
-/* ════════════════════════ YOUR ORIGINAL: updateSpatialAudio ════════════════════════ */
-function updateSpatialAudio(mouseX, mouseY) {
-    if (!audioCtx) return;
-    blockAudioNodes.forEach(node => {
-        const rect         = node.element.getBoundingClientRect();
-        const blockCenterX = rect.left + rect.width  / 2;
-        const blockCenterY = rect.top  + rect.height / 2;
-        const distance     = Math.hypot(mouseX - blockCenterX, mouseY - blockCenterY);
- 
-        if (distance < 110) {
-            const voltageJitter = (Math.random() - 0.5) * 750;
-            node.processorWhine.frequency.setValueAtTime(node.baseFreq + voltageJitter, audioCtx.currentTime);
-            node.gainNode.gain.setTargetAtTime(0.010, audioCtx.currentTime, 0.01);
-        } else {
-            node.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.01);
-        }
-    });
-}
- 
-/* ════════════════════════ YOUR ORIGINAL: loadRepository ════════════════════════ */
-async function loadRepository() {
-    let csvText = '';
-    try {
-        const response = await fetch('data.vcs');
-        csvText = await response.text();
+            saveLocal();
+            log('LOADED // ' + archive.length + ' WORKS');
+        } else throw new Error();
     } catch(e) {
-        logTrack('VCS', 'data.vcs NOT FOUND — using demo data');
-        csvText = demoVCS();
-    }
- 
-    const lines = csvText.trim().split('\n').slice(1);
-    const database = lines.map(line => {
-        const cols = line.split(',');
-        return {
-            year:     (cols[0] || "").trim(),
-            mode:     (cols[1] || "").trim(),
-            entry:    (cols[2] || "").trim(),
-            context:  (cols[3] || "").trim(),
-            venue:    (cols[4] || "").trim(),
-            location: (cols[5] || "").trim()
-        };
-    }).filter(e => e.year);
- 
-    const layouts = [
-        {col:"span 4",row:"span 2"},{col:"span 5",row:"span 3"},
-        {col:"span 3",row:"span 2"},{col:"span 5",row:"span 2"},
-        {col:"span 4",row:"span 3"},{col:"span 3",row:"span 2"},
-        {col:"span 4",row:"span 2"},{col:"span 5",row:"span 2"},
-        {col:"span 3",row:"span 3"},{col:"span 6",row:"span 2"},
-        {col:"span 3",row:"span 2"},{col:"span 3",row:"span 3"}
-    ];
- 
-    matrixContainer.innerHTML = database.map((item, idx) => {
-        const layout   = layouts[idx % layouts.length];
-        const rawType  = item.mode.toLowerCase().trim();
-        let fileCategory = 'plus';
- 
-        if (rawType === '+' || rawType === 'plus') fileCategory = 'plus';
-        else if (['solo','group','screening','performance','other'].includes(rawType)) fileCategory = 'shows';
-        else if (['press','publication','publications','editorial','essay','writing'].includes(rawType)) fileCategory = 'writing';
-        else if (['film','video','16 mm','sound','multi','digital video','4k'].includes(rawType)) fileCategory = 'time-based_media';
-        else if (rawType.includes('collect')) fileCategory = 'collection';
-        else if (rawType.includes('founding')) fileCategory = 'founding';
-        else if (rawType === 'code') fileCategory = 'code';
- 
-        const cleanTitle     = item.entry.replace(/[^a-zA-Z0-9]/g, "-");
-        const identityString = `${item.year}_${fileCategory.toUpperCase()}_${cleanTitle}`;
-        const imagePath      = `images/${item.year}_${fileCategory}.jpg`;
- 
-        return `
-            <div class="block" id="block-${idx}"
-                 style="grid-column:${layout.col};grid-row:${layout.row}"
-                 data-mode="${fileCategory}" data-text="${item.entry.replace(/"/g,"'")}"
-                 onclick="mutateSystem(this)">
-                <canvas class="generative-canvas"></canvas>
-                <img src="${imagePath}" class="asset-img" onload="this.classList.add('revealed')" onerror="this.style.display='none';">
-                <div class="identity-label">${identityString}</div>
-            </div>
-        `;
-    }).join('');
- 
-    initializeCanvases();
-    initializePolyphonicMatrix();
-    attachInteractions();
-    harvestAuthenticLedger();
-    logTrack('VCS', `REPOSITORY LOADED — ${database.length} ENTRIES`);
-}
- 
-function demoVCS() {
-    return `year,mode,entry,context,venue,location
-2024,collection,Structural Residue,Permanent Collection,Whitney Museum,New York
-2023,group,Liquid Architectures,Group Exhibition,Centre Pompidou,Paris
-2022,film,Passage Through,Screening,MAM SP,São Paulo
-2021,solo,Index of Surfaces,Solo Show,Muzeum Sztuki,Łódź
-2020,performance,Threshold Frequency,Performance,Museo Moderno,Buenos Aires
-2019,group,Carrier Signal,Group Exhibition,MMSU,Rijeka
-2018,publication,On Network Topology,Essay,,
-2017,solo,Interference Pattern,Solo Show,Whitney Museum,New York
-2016,group,Surface Tension,Group Exhibition,Centre Pompidou,Paris`;
-}
- 
-/* ════════════════════════ YOUR ORIGINAL: initializeCanvases ════════════════════════ */
-function initializeCanvases() {
-    document.querySelectorAll('.block').forEach(block => {
-        const canvas  = block.querySelector('.generative-canvas');
-        const ctx     = canvas.getContext('2d');
-        const textStr = block.getAttribute('data-text');
- 
-        const resizeCanvas = () => {
-            canvas.width  = block.clientWidth;
-            canvas.height = block.clientHeight;
-            ctx.fillStyle = "rgba(120,120,120,0.12)";
-            ctx.font      = "9px monospace";
-            for (let i = 0; i < 3; i++) {
-                ctx.fillText(textStr,
-                    Math.random() * (canvas.width  - 60),
-                    Math.random() * canvas.height);
+        try {
+            const s = localStorage.getItem('cod_data');
+            if (s) {
+                const data = JSON.parse(s);
+                if (Array.isArray(data)) { archive=data; makers=[]; }
+                else { makers=data.makers||[]; archive=data.archive||[]; }
             }
-        };
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-    });
-}
- 
-/* ════════════════════════ YOUR ORIGINAL: attachInteractions ════════════════════════ */
-function attachInteractions() {
-    document.querySelectorAll('.block').forEach(block => {
-        const mode  = block.getAttribute('data-mode');
-        const label = block.querySelector('.identity-label').innerText;
- 
-        block.addEventListener('mouseenter', () => {
-            if      (mode === 'time-based_media') { lens.style.width = '70px'; lens.style.height = '70px'; }
-            else if (mode === 'code')             { lens.style.width = '12px'; lens.style.height = '12px'; }
-            else if (mode === 'plus')             { lens.style.width = '55px'; lens.style.height = '55px'; }
-            else                                  { lens.style.width = '45px'; lens.style.height = '45px'; }
-            humanTrajectory.push(mode);
-            logTrack('BUS_READ', `DRIVE → ${label}`);
-        });
- 
-        block.addEventListener('mouseleave', () => {
-            lens.style.width = '30px'; lens.style.height = '30px';
-        });
-    });
-}
- 
-/* ════════════════════════ YOUR ORIGINAL: harvestAuthenticLedger ════════════════════════ */
-function harvestAuthenticLedger() {
-    const rows = document.querySelectorAll('.block');
-    rows.forEach(row => {
-        const textContent = (row.getAttribute('data-text') || row.textContent || '').toLowerCase();
-        let targetDomain = '';
- 
-        if      (textContent.includes('whitney'))   targetDomain = 'https://www.whitney.org';
-        else if (textContent.includes('sztuki'))    targetDomain = 'https://msl.org.pl';
-        else if (textContent.includes('pompidou'))  targetDomain = 'https://www.centrepompidou.fr';
-        else if (textContent.includes('paulo'))     targetDomain = 'https://mam.org.br';
-        else if (textContent.includes('moderno'))   targetDomain = 'https://museomoderno.org';
-        else if (textContent.includes('rijeka'))    targetDomain = 'https://mmsu.hr';
-        else return;
- 
-        if (activeNodeSignals.has(row)) return; /* don't double-attach */
- 
-        const nodeGain  = audioCtx.createGain();
-        nodeGain.gain.setValueAtTime(0.0, audioCtx.currentTime);
-        const packetOsc = audioCtx.createOscillator();
-        packetOsc.type  = 'sawtooth';
-        const isEuropean = targetDomain.includes('.pl') || targetDomain.includes('.fr') || targetDomain.includes('.hr');
-        const baseFreq   = isEuropean ? 293.66 : 440.00;
-        packetOsc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
-        packetOsc.connect(nodeGain);
-        nodeGain.connect(masterGainNode);
-        packetOsc.start();
- 
-        const nodeData = { domain: targetDomain, gain: nodeGain, osc: packetOsc, baseFreq, latencyHistory: [] };
-        activeNodeSignals.set(row, nodeData);
- 
-        setInterval(() => {
-            const start = performance.now();
-            fetch(targetDomain + '/?ping=' + start, { mode: 'no-cors', cache: 'no-store' })
-                .then(() => {
-                    const latency = performance.now() - start;
-                    nodeData.latencyHistory.push(latency);
-                    if (nodeData.latencyHistory.length > 5) nodeData.latencyHistory.shift();
-                    const avg    = nodeData.latencyHistory.reduce((a,b) => a+b, 0) / nodeData.latencyHistory.length;
-                    const jitter = Math.abs(latency - avg);
-                    nodeData.osc.frequency.setTargetAtTime(nodeData.baseFreq + (jitter * 4), audioCtx.currentTime, 0.05);
-                }).catch(() => {});
-        }, 1000 + Math.random() * 600);
- 
-        row.addEventListener('mouseenter', () => nodeData.gain.gain.setTargetAtTime(0.03, audioCtx.currentTime, 0.03));
-        row.addEventListener('mouseleave', () => nodeData.gain.gain.setTargetAtTime(0.0,  audioCtx.currentTime, 0.08));
-    });
-}
- 
-/* ════════════════════════ YOUR ORIGINAL: logTrack ════════════════════════ */
-function logTrack(agent, detail, style) {
-    const time     = new Date().toLocaleTimeString();
-    const logEntry = document.createElement('div');
-    logEntry.className = 'ledger-line';
-    logEntry.innerHTML = `<span class="l-ts">[${time}]</span><span class="l-agent ${style||''}">${agent}</span><span class="l-detail">// ${detail}</span>`;
-    ledgerContainer.appendChild(logEntry);
-    if (ledgerContainer.children.length > 5) ledgerContainer.removeChild(ledgerContainer.firstChild);
-}
- 
-/* ════════════════════════ YOUR ORIGINAL: toggleMode ════════════════════════ */
-function toggleMode() {
-    document.body.classList.toggle('dark-mode');
-    document.getElementById('main-name').innerText =
-        document.body.classList.contains('dark-mode') ? "K.ari.n Schneider" : "KARIN SCHNEIDER";
-    logTrack('SYS_INVERT', 'POLARITY INVERSION EFFECTED');
-}
- 
-/* ════════════════════════ VU METER ════════════════════════ */
-function startVU() {
-    const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
-    outputGainNode.connect(analyser);
-    const buf = new Uint8Array(analyser.frequencyBinCount);
-    const bar = document.getElementById('vu-bar');
- 
-    function tick() {
-        analyser.getByteFrequencyData(buf);
-        let sum = 0;
-        for (let i = 0; i < buf.length; i++) sum += buf[i];
-        bar.style.width = ((sum / buf.length / 255) * 100).toFixed(1) + '%';
-        bar.style.background = masterMode === 'goog' ? '#ccaa00' : masterMode === 'mute' ? '#333' : '#00cc66';
-        vuRafId = requestAnimationFrame(tick);
+        } catch(err) { makers=[]; archive=[]; }
     }
-    tick();
+    purgeExpired();
+    renderMain();
 }
- 
-/* ════════════════════════ MOUSEMOVE ════════════════════════ */
-window.addEventListener('mousemove', e => {
-    updateSpatialAudio(e.clientX, e.clientY);
-    if (lens) { lens.style.left = e.clientX + 'px'; lens.style.top = e.clientY + 'px'; }
-});
+
+function saveLocal() {
+    localStorage.setItem('cod_data', JSON.stringify({ makers, archive }));
+}
+
+function purgeExpired() {
+    const now = Date.now();
+    archive = archive.filter(item => {
+        if (!item.uploadTime) return true;
+        return (now - item.uploadTime) < 24 * 60 * 60 * 1000;
+    });
+    makers = makers.filter(m => {
+        if (!m.uploadTime) return true;
+        return (now - m.uploadTime) < 24 * 60 * 60 * 1000;
+    });
+    saveLocal();
+}
+
+/* ── MAIN CANVAS — identity shapes ── */
+function renderMain() {
+    const canvas = document.getElementById('canvas');
+    Object.values(cdTimers).forEach(t => clearInterval(t));
+    cdTimers = {};
+    canvas.innerHTML = '';
+
+    const now    = Date.now();
+    const active = makers.filter(m => {
+        if (!m.uploadTime) return true;
+        return (now - m.uploadTime) < 24 * 60 * 60 * 1000;
+    });
+
+    document.getElementById('live-count').textContent = active.length + ' LIVE';
+
+    active.forEach((maker, i) => {
+        const isCurator = maker.role === 'curator';
+        const W = isCurator ? 110 : 88;
+        const H = isCurator ? 66  : 88;
+
+        if (!makerPos[maker.id]) {
+            const mxX = Math.max(60, window.innerWidth  - W - 100);
+            const mxY = Math.max(80, window.innerHeight - H - 100);
+            makerPos[maker.id] = {
+                x: 80 + (i * 157 + Math.floor(i * 0.6 * mxX)) % mxX,
+                y: 80 + (i * 103 + Math.floor(i * 0.5 * mxY)) % mxY
+            };
+        }
+        const pos = makerPos[maker.id];
+
+        const wrap = document.createElement('div');
+        wrap.className = 'identity-wrap';
+        wrap.style.cssText = `left:${pos.x}px;top:${pos.y}px;width:${W}px;height:${H}px;`;
+        wrap.dataset.id = maker.id;
+
+        const inner = document.createElement('div');
+        inner.className = 'identity-inner ' + (isCurator ? 'identity-oval' : 'identity-circle');
+
+        const init = document.createElement('div');
+        init.className   = 'identity-initials';
+        init.textContent = maker.initials || getInitials(maker.name);
+        inner.appendChild(init);
+        wrap.appendChild(inner);
+
+        const nameEl = document.createElement('div');
+        nameEl.className   = 'identity-name';
+        nameEl.textContent = maker.name || '';
+        wrap.appendChild(nameEl);
+
+        if (maker.uploadTime) {
+            const cdEl = document.createElement('div');
+            cdEl.className = 'identity-cd';
+            wrap.appendChild(cdEl);
+            cdTimers[maker.id] = setInterval(() => {
+                const rem = (maker.uploadTime + 24*60*60*1000) - Date.now();
+                if (rem <= 0) { clearInterval(cdTimers[maker.id]); wrap.remove(); return; }
+                const h=Math.floor(rem/3600000), m=Math.floor((rem%3600000)/60000), s=Math.floor((rem%60000)/1000);
+                cdEl.textContent = pad(h)+':'+pad(m)+':'+pad(s);
+                if (rem < 3600000) cdEl.classList.add('urgent');
+            }, 1000);
+        }
+
+        // admin: edit + delete
+        if (isAdmin) {
+            const eb = document.createElement('button');
+            eb.textContent = '✎';
+            eb.style.cssText = 'position:absolute;top:-14px;left:0;background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;opacity:0;transition:0.15s;';
+            const db = document.createElement('button');
+            db.textContent = '×';
+            db.style.cssText = 'position:absolute;top:-14px;right:0;background:none;border:none;color:#ff4444;font-size:14px;cursor:pointer;opacity:0;transition:0.15s;';
+            wrap.addEventListener('mouseenter', ()=>{ eb.style.opacity='0.8'; db.style.opacity='0.8'; });
+            wrap.addEventListener('mouseleave', ()=>{ eb.style.opacity='0'; db.style.opacity='0'; });
+            eb.onclick = (e)=>{ e.stopPropagation(); openEditProfile(maker.id); };
+            db.onclick  = (e)=>{ e.stopPropagation(); deleteMaker(maker.id); };
+            wrap.appendChild(eb); wrap.appendChild(db);
+        }
+
+        wrap.onclick = () => {
+            if (wrap._dragged) { wrap._dragged=false; return; }
+            if (maker.accessCode && maker.accessCode !== '') {
+                const pass = prompt('Enter access code:');
+                if (!pass || pass.trim() !== maker.accessCode.trim()) { alert('INVALID CODE'); return; }
+            }
+            openCluster(maker);
+        };
+
+        makeDraggableIdentity(wrap, maker.id);
+        canvas.appendChild(wrap);
+    });
+
+    log('COMMONS_ON_DEMAND // ' + active.length + ' LIVE');
+}
+
+/* ── CLUSTER ── */
+function openCluster(maker) {
+    currentMaker = maker;
+    document.getElementById('cluster-view').style.display = 'block';
+    document.getElementById('cluster-name-el').textContent = maker.name || '—';
+    document.getElementById('cluster-role-el').textContent = maker.role==='curator' ? 'CURATOR · PROGRAM' : 'MAKER · ARTIST';
+
+    const cdEl = document.getElementById('cluster-cd');
+    if (cdTimers['_cluster']) clearInterval(cdTimers['_cluster']);
+    if (maker.uploadTime) {
+        cdTimers['_cluster'] = setInterval(()=>{
+            const rem = (maker.uploadTime + 24*60*60*1000) - Date.now();
+            if (rem<=0){cdEl.textContent='EXPIRED';return;}
+            const h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+            cdEl.textContent=pad(h)+':'+pad(m)+':'+pad(s);
+            if(rem<3600000) cdEl.style.color='#ff4444';
+        },1000);
+    }
+    renderCluster();
+}
+
+function closeCluster() {
+    document.getElementById('cluster-view').style.display = 'none';
+    if (cdTimers['_cluster']) clearInterval(cdTimers['_cluster']);
+    currentMaker = null;
+}
+
+function renderCluster() {
+    const canvas = document.getElementById('cluster-canvas');
+    Object.keys(cdTimers).filter(k=>k.startsWith('w_')).forEach(k=>{clearInterval(cdTimers[k]);delete cdTimers[k];});
+    canvas.innerHTML = '';
+
+    const works = archive.filter(w => w.makerId === (currentMaker && currentMaker.id));
+
+    works.forEach((item, i) => {
+        const geo = shapeGeometry(item.mode);
+        const wrap = document.createElement('div');
+        wrap.className = 'shape-wrap';
+        wrap.dataset.id = item.id;
+
+        if (!workPos[item.id]) {
+            const mxX = Math.max(50, window.innerWidth  - geo.w - 80);
+            const mxY = Math.max(80, window.innerHeight - geo.h - 80);
+            workPos[item.id] = {
+                x: 60 + (i * 137 + Math.floor(i * 0.7 * mxX)) % mxX,
+                y: 60 + (i * 89  + Math.floor(i * 0.5 * mxY)) % mxY
+            };
+        }
+        const pos = workPos[item.id];
+        wrap.style.left = pos.x+'px'; wrap.style.top = pos.y+'px';
+        wrap.style.width = geo.w+'px'; wrap.style.height = geo.h+'px';
+
+        const shape = document.createElement('div');
+        shape.className = geo.cls;
+        shape.style.width='100%'; shape.style.height='100%'; shape.style.position='relative';
+        if (geo.type==='circle') shape.style.borderRadius='50%';
+
+        // Title CENTERED
+        const titleEl = document.createElement('div');
+        titleEl.className = 'shape-title';
+        titleEl.textContent = item.title || 'UNTITLED';
+        shape.appendChild(titleEl);
+
+        // Artist bottom-left (smaller, dimmer)
+        const label = document.createElement('div');
+        label.className = 'shape-label';
+        label.textContent = item.artist || '';
+        shape.appendChild(label);
+
+        // Countdown top-right
+        const cd = document.createElement('div');
+        cd.className = 'shape-countdown';
+        shape.appendChild(cd);
+        if (item.uploadTime) {
+            cdTimers['w_'+item.id] = setInterval(()=>{
+                const rem=(item.uploadTime+24*60*60*1000)-Date.now();
+                if(rem<=0){clearInterval(cdTimers['w_'+item.id]);cd.textContent='EXPIRED';wrap.classList.add('expired');return;}
+                const h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+                cd.textContent=pad(h)+':'+pad(m)+':'+pad(s);
+                if(rem<3600000)cd.classList.add('urgent');
+            },1000);
+        }
+
+        // Invite btn
+        const invBtn = document.createElement('button');
+        invBtn.textContent='INVITE';
+        invBtn.style.cssText='position:absolute;bottom:10px;right:10px;background:none;border:none;font-size:8px;letter-spacing:1px;color:var(--accent);cursor:pointer;text-transform:uppercase;opacity:0.5;padding:2px 4px;';
+        invBtn.onmouseenter=()=>invBtn.style.opacity='1';
+        invBtn.onmouseleave=()=>invBtn.style.opacity='0.5';
+        invBtn.onclick=(e)=>{e.stopPropagation();showInvite(item);};
+        shape.appendChild(invBtn);
+
+        // Admin actions
+        const actions = document.createElement('div');
+        actions.className='shape-actions';
+        const editBtn=document.createElement('button');
+        editBtn.className='shape-action-btn';editBtn.textContent='✎';
+        editBtn.onclick=(e)=>{e.stopPropagation();openEditForm(e,item.id);};
+        const delBtn=document.createElement('button');
+        delBtn.className='shape-action-btn shape-del-btn';delBtn.textContent='×';
+        delBtn.onclick=(e)=>{e.stopPropagation();deleteWork(item.id);};
+        actions.appendChild(editBtn);actions.appendChild(delBtn);
+        shape.appendChild(actions);
+
+        wrap.appendChild(shape);
+        wrap.onclick=()=>activateWork(item);
+        makeDraggableWork(wrap, item.id);
+        canvas.appendChild(wrap);
+    });
+}
+
+function shapeGeometry(mode) {
+    switch(mode) {
+        case 'VIDEO':       return { w:280, h:180, type:'rect',   cls:'shape-video' };
+        case 'PERFORMANCE': return { w:200, h:200, type:'circle', cls:'shape-performance' };
+        case 'SOUND':       return { w:120, h:120, type:'rect',   cls:'shape-sound' };
+        case 'WWW':         return { w:340, h:80,  type:'rect',   cls:'shape-code' };
+        case 'IMAGE':       return { w:220, h:160, type:'rect',   cls:'shape-image' };
+        default:            return { w:200, h:140, type:'rect',   cls:'shape-image' };
+    }
+}
+
+/* ── DRAG ── */
+function makeDraggableIdentity(el, id) {
+    let down=false,sx,sy,ox,oy;
+    el.addEventListener('mousedown',(e)=>{
+        if(e.target.tagName==='BUTTON')return;
+        down=true;el._dragged=false;
+        sx=e.clientX;sy=e.clientY;
+        ox=parseFloat(el.style.left);oy=parseFloat(el.style.top);
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove',(e)=>{
+        if(!down)return;
+        const dx=e.clientX-sx,dy=e.clientY-sy;
+        if(Math.abs(dx)>4||Math.abs(dy)>4)el._dragged=true;
+        el.style.left=(ox+dx)+'px';el.style.top=(oy+dy)+'px';
+        makerPos[id]={x:ox+dx,y:oy+dy};
+    });
+    window.addEventListener('mouseup',()=>{down=false;});
+}
+
+function makeDraggableWork(el, id) {
+    let down=false,sx,sy,ox,oy;
+    el.addEventListener('mousedown',(e)=>{
+        if(e.target.tagName==='BUTTON')return;
+        down=true;el._dragged=false;
+        sx=e.clientX;sy=e.clientY;
+        ox=parseFloat(el.style.left);oy=parseFloat(el.style.top);
+        e.preventDefault();
+    });
+    window.addEventListener('mousemove',(e)=>{
+        if(!down)return;
+        const dx=e.clientX-sx,dy=e.clientY-sy;
+        if(Math.abs(dx)>4||Math.abs(dy)>4)el._dragged=true;
+        el.style.left=(ox+dx)+'px';el.style.top=(oy+dy)+'px';
+        workPos[id]={x:ox+dx,y:oy+dy};
+    });
+    window.addEventListener('mouseup',()=>{down=false;});
+}
+
+/* ── ACTIVATE / WATCH — original DATAROOM logic ── */
+function activateWork(item) {
+    if (item.accessCode && item.accessCode !== '') {
+        const pass = prompt('Enter access code to watch:');
+        if (!pass || pass.trim() !== item.accessCode.trim()) {
+            alert('INVALID_CODE // ACCESS_DENIED'); return;
+        }
+    }
+    openRoom(item);
+}
+
+function openRoom(item) {
+    const room = document.getElementById('viewing-room');
+    const container = document.getElementById('media-container');
+    if (vjsPlayer) { vjsPlayer.dispose(); vjsPlayer=null; }
+    container.innerHTML = '';
+    room.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    activeWork = item;
+
+    if (item.mode==='WWW' && item.linkUrl) { window.open(item.linkUrl,'_blank'); closeRoom(); return; }
+
+    const cleanPath = (item.manualPath||'').split('?')[0].toLowerCase();
+    const ext = cleanPath.split('.').pop();
+    const isVideo = ['mp4','mov','webm','avi','mkv','m4v','ogv'].includes(ext);
+    const isAudio = ['mp3','m4a','wav','ogg','aac'].includes(ext);
+
+    if (isVideo) {
+        const isDropbox = item.manualPath.includes('dropbox.com');
+        if (isDropbox) {
+            /* Dropbox: convert to direct streaming URL — original working method */
+            const streamUrl = item.manualPath
+                .replace('www.dropbox.com','dl.dropboxusercontent.com')
+                .replace('?dl=0','')
+                .replace('?dl=1','')
+                .replace('?raw=1','')
+                .split('?')[0];
+            const iframe = document.createElement('iframe');
+            iframe.src = streamUrl;
+            iframe.style.cssText='width:100%;height:100%;border:none;';
+            iframe.setAttribute('allowfullscreen','');
+            iframe.setAttribute('allow','autoplay');
+            container.appendChild(iframe);
+        } else {
+            /* Backblaze B2 via Cloudflare or any direct URL */
+            const vidEl = document.createElement('video');
+            vidEl.setAttribute('controls','');
+            vidEl.setAttribute('autoplay','');
+            vidEl.setAttribute('playsinline','');
+            vidEl.style.cssText='max-width:100%;max-height:100%;width:auto;height:auto;';
+            vidEl.src = item.manualPath;
+            vidEl.onerror=()=>{container.innerHTML='<div style="color:#fff;font-family:monospace;font-size:11px;text-align:center;">MEDIA NOT FOUND</div>';};
+            container.appendChild(vidEl);
+            vidEl.play().catch(()=>{vidEl.muted=true;vidEl.play();});
+        }
+    } else if (isAudio) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:20px;';
+        const t = document.createElement('div');
+        t.style.cssText='color:#fff;font-family:monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;';
+        t.textContent=item.title;
+        const audio=document.createElement('audio');
+        audio.controls=true;audio.autoplay=true;audio.src=item.manualPath;
+        audio.style.cssText='width:380px;max-width:80vw;';
+        wrap.appendChild(t);wrap.appendChild(audio);
+        container.appendChild(wrap);
+    } else {
+        const img=document.createElement('img');
+        img.src=item.manualPath;
+        img.style.cssText='max-width:85%;max-height:85%;object-fit:contain;';
+        img.onerror=()=>{container.innerHTML='<div style="color:#fff;font-family:monospace;font-size:11px;">MEDIA NOT FOUND</div>';};
+        container.appendChild(img);
+    }
+}
+
+function closeRoom() {
+    if(vjsPlayer){vjsPlayer.dispose();vjsPlayer=null;}
+    document.getElementById('viewing-room').style.display='none';
+    document.getElementById('media-container').innerHTML='';
+    document.body.style.overflow='hidden';
+    setViewBg('#000000');
+}
+
+function setViewBg(c){
+    document.getElementById('viewing-room').style.backgroundColor=c;
+}
+
+/* ── INVITE ── */
+function showInvite(item) {
+    const codeLine = item.accessCode ? `\nAccess code (after payment): ${item.accessCode}` : '';
+    const msg=`You are invited to watch:\n\n"${item.title}"${item.artist?' by '+item.artist:''} (${item.year})\n\nAvailable for 24 hours only.\n${DATAROOM_URL}${codeLine}`;
+    document.getElementById('invite-text').textContent=msg;
+    document.getElementById('invite-overlay').style.display='flex';
+    activeWork=item;
+}
+function closeInvite(e){if(e.target.id==='invite-overlay')document.getElementById('invite-overlay').style.display='none';}
+function copyInvite(){navigator.clipboard.writeText(document.getElementById('invite-text').textContent).then(()=>log('INVITE_COPIED'));}
+function emailInvite(){
+    if(!activeWork)return;
+    const sub=encodeURIComponent('Invitation: '+activeWork.title+' — COMMONS ON DEMAND 24H');
+    const body=encodeURIComponent(document.getElementById('invite-text').textContent);
+    window.location.href='mailto:?subject='+sub+'&body='+body;
+}
+
+/* ── PROFILE FORM ── */
+function openProfileForm(){
+    document.getElementById('profileForm').reset();
+    document.getElementById('profile-id').value='';
+    document.getElementById('profile-title').textContent='Create Profile';
+    document.getElementById('profile-submit').textContent='CREATE PROFILE — 24H CLOCK STARTS';
+    document.getElementById('profile-section').style.display='flex';
+}
+function openEditProfile(id){
+    const m=makers.find(x=>String(x.id)===String(id));if(!m)return;
+    document.getElementById('profile-id').value=m.id;
+    document.getElementById('p-name').value=m.name||'';
+    document.getElementById('p-initials').value=m.initials||'';
+    document.getElementById('p-role').value=m.role||'maker';
+    document.getElementById('p-code').value=m.accessCode||'';
+    document.getElementById('profile-title').textContent='Edit Profile';
+    document.getElementById('profile-submit').textContent='UPDATE PROFILE';
+    document.getElementById('profile-section').style.display='flex';
+}
+function closeProfileForm(){document.getElementById('profile-section').style.display='none';}
+
+document.getElementById('profileForm').onsubmit=function(e){
+    e.preventDefault();
+    const editId=document.getElementById('profile-id').value;
+    const name=document.getElementById('p-name').value.trim();
+    const data={
+        name,
+        initials:document.getElementById('p-initials').value.trim().toUpperCase()||getInitials(name),
+        role:document.getElementById('p-role').value,
+        accessCode:document.getElementById('p-code').value.trim(),
+        uploadTime:editId?(makers.find(m=>String(m.id)===String(editId))?.uploadTime||Date.now()):Date.now()
+    };
+    if(editId){
+        const idx=makers.findIndex(m=>String(m.id)===String(editId));
+        makers[idx]={...makers[idx],...data,id:editId};
+    } else {
+        data.id=String(Date.now()+Math.random());
+        makers.push(data);
+    }
+    saveLocal();closeProfileForm();renderMain();
+};
+function deleteMaker(id){
+    makers=makers.filter(m=>String(m.id)!==String(id));
+    archive=archive.filter(w=>w.makerId!==id);
+    delete makerPos[id];
+    saveLocal();renderMain();
+}
+
+/* ── WORK FORM — original DATAROOM logic ── */
+function toggleReg(reset=true){
+    const s=document.getElementById('reg-section');
+    const hidden=s.style.display==='none'||s.style.display==='';
+    if(reset&&hidden){
+        document.getElementById('archiveForm').reset();
+        document.getElementById('editing-id').value='';
+        document.getElementById('form-title').textContent='Upload Work — 24H Clock Starts Now';
+        document.getElementById('submit-btn').textContent='COMMIT — 24H CLOCK STARTS NOW';
+        document.getElementById('form-preview-container').innerHTML='<span style="font-size:9px;opacity:0.3;font-family:monospace;">PREVIEW</span>';
+        if(currentMaker) document.getElementById('artist').value=currentMaker.name||'';
+    }
+    s.style.display=hidden?'flex':'none';
+}
+function handleBgClick(e){if(e.target.id==='reg-section')toggleReg();}
+
+function generateCode(fieldId){
+    const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code='';
+    for(let i=0;i<6;i++)code+=chars[Math.floor(Math.random()*chars.length)];
+    document.getElementById(fieldId).value=code;
+}
+
+function handleFileSelection(input){
+    const file=input.files[0];if(!file)return;
+    document.getElementById('manualPath').value='media/'+file.name;
+    const container=document.getElementById('form-preview-container');
+    const src=URL.createObjectURL(file);
+    if(file.type.startsWith('video')){
+        container.innerHTML=`<video src="${src}" muted preload="metadata" style="pointer-events:none;max-height:100%;"></video>`;
+    } else if(file.type.startsWith('audio')){
+        container.innerHTML=`<div style="font-family:monospace;font-size:11px;opacity:0.5;">♪ ${file.name}</div>`;
+    } else {
+        container.innerHTML=`<img src="${src}" style="max-height:100%;max-width:100%;object-fit:contain;">`;
+    }
+}
+
+function openEditForm(e,id){
+    e.stopPropagation();
+    const item=archive.find(i=>String(i.id)===String(id));if(!item)return;
+    document.getElementById('editing-id').value=item.id;
+    document.getElementById('year').value=item.year||'';
+    document.getElementById('title').value=item.title||'';
+    document.getElementById('mode').value=item.mode||'VIDEO';
+    document.getElementById('artist').value=item.artist||'';
+    document.getElementById('materials').value=item.materials||'';
+    document.getElementById('manualPath').value=item.manualPath||'';
+    document.getElementById('linkUrl').value=item.linkUrl||'';
+    document.getElementById('accessCode').value=item.accessCode||'';
+    document.getElementById('form-title').textContent='Edit Entry';
+    document.getElementById('submit-btn').textContent='UPDATE';
+    toggleReg(false);
+}
+
+document.getElementById('archiveForm').onsubmit=function(e){
+    e.preventDefault();
+    const editingId=document.getElementById('editing-id').value;
+    const entryData={
+        year:       document.getElementById('year').value,
+        mode:       document.getElementById('mode').value,
+        title:      document.getElementById('title').value.trim()||'UNTITLED',
+        artist:     document.getElementById('artist').value.trim(),
+        materials:  document.getElementById('materials').value,
+        manualPath: document.getElementById('manualPath').value.trim(),
+        linkUrl:    document.getElementById('linkUrl').value.trim(),
+        accessCode: document.getElementById('accessCode').value.trim(),
+        makerId:    currentMaker ? currentMaker.id : null,
+        uploadTime: editingId?(archive.find(i=>String(i.id)===String(editingId))?.uploadTime||Date.now()):Date.now()
+    };
+    if(editingId){
+        const idx=archive.findIndex(i=>String(i.id)===String(editingId));
+        archive[idx]={...archive[idx],...entryData,id:editingId};
+    } else {
+        entryData.id=String(Date.now()+Math.random());
+        archive.push(entryData);
+    }
+    saveLocal();
+    toggleReg();
+    if(currentMaker) renderCluster(); else renderMain();
+};
+
+function deleteWork(id){
+    archive=archive.filter(i=>String(i.id)!==String(id));
+    delete workPos[id];
+    saveLocal();
+    if(currentMaker)renderCluster();
+}
+
+/* ── ADMIN ── */
+function secretHandshake(){
+    const entry=prompt('Studio access code:');
+    if(!entry)return;
+    if(entry.trim().toLowerCase()===STUDIO_CODE){
+        isAdmin=true;
+        document.body.classList.add('admin-active');
+        log('ADMIN // ACTIVE');
+    } else {
+        isAdmin=false;
+        document.body.classList.remove('admin-active');
+    }
+    renderMain();
+    if(currentMaker)renderCluster();
+}
+
+function toggleMode(){document.body.classList.toggle('light-mode');}
+
+/* ── EXPORT / IMPORT ── */
+function exportData(){
+    const s='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({makers,archive},null,2));
+    const a=document.createElement('a');a.href=s;a.download='data.json';
+    document.body.appendChild(a);a.click();a.remove();
+    log('EXPORT_COMPLETE');
+}
+function importData(){
+    const input=document.createElement('input');input.type='file';input.accept='.json';
+    input.onchange=ev=>{
+        const r=new FileReader();r.readAsText(ev.target.files[0]);
+        r.onload=re=>{
+            try{
+                const data=JSON.parse(re.target.result);
+                if(Array.isArray(data)){archive=data;makers=[];}
+                else{makers=data.makers||[];archive=data.archive||[];}
+                saveLocal();renderMain();log('IMPORT_COMPLETE');
+            }catch(err){log('IMPORT_ERROR');}
+        };
+    };input.click();
+}
+
+function log(msg){document.getElementById('console-display').textContent=msg;}
+function pad(n){return String(n).padStart(2,'0');}
+function getInitials(name){if(!name)return'?';return name.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,3);}
+
+loadArchive();
 </script>
 </body>
 </html>
