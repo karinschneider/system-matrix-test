@@ -422,6 +422,7 @@
                     <option value="PERFORMANCE">PERFORMANCE</option>
                     <option value="SOUND">SOUND</option>
                     <option value="WWW">WWW</option>
+                    <option value="SOCIAL">WWW — Social Media</option>
                     <option value="IMAGE">IMAGE</option>
                 </select>
             </div>
@@ -767,6 +768,7 @@ function shapeGeometry(mode) {
         case 'PERFORMANCE': return { w:200, h:200, type:'circle', cls:'shape-performance' };
         case 'SOUND':       return { w:120, h:120, type:'rect',   cls:'shape-sound' };
         case 'WWW':         return { w:340, h:80,  type:'rect',   cls:'shape-code' };
+        case 'SOCIAL':      return { w:160, h:44,  type:'rect',   cls:'shape-code' };
         case 'IMAGE':       return { w:220, h:160, type:'rect',   cls:'shape-image' };
         default:            return { w:200, h:140, type:'rect',   cls:'shape-image' };
     }
