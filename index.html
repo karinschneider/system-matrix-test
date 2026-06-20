@@ -342,7 +342,6 @@
     <div id="console-display">COMMONS_ON_DEMAND // 24H</div>
     <div class="db-controls">
         <span class="admin-only" onclick="exportData()">EXPORT</span>
-        <span class="admin-only" onclick="importData()">IMPORT</span>
     </div>
 </div>
 
@@ -495,11 +494,15 @@
 
 <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 <script>
-const STUDIO_CODE  = 'studio';
-const DATAROOM_URL = window.location.href.split('?')[0];
+// Backend Worker — change this to https://api.commons-on-demand.com/ once that
+// custom domain finishes connecting (see README → TASKS → IN PROGRESS).
+const WORKER_URL    = 'https://commons-on-demand-api.pb6w4bwg2n.workers.dev';
+const DATAROOM_URL  = window.location.href.split('?')[0];
 
-// Always start logged out
-let isAdmin = false;
+// Studio login persists across reloads via localStorage — only the access
+// code itself is stored, never any actual artist data.
+let authCode = localStorage.getItem('cod_auth') || null;
+let isAdmin  = !!authCode;
 
 let makers       = [];
 let archive      = [];
@@ -511,51 +514,38 @@ let activeWork   = null;
 let vjsPlayer    = null;
 let positions    = {}; // alias for work positions on cluster canvas
 
-/* ── LOAD ── */
+/* ── API HELPER — every authenticated call goes through this ── */
+async function apiFetch(path, options = {}) {
+    const headers = Object.assign({}, options.headers);
+    if (authCode) headers['Authorization'] = 'Bearer ' + authCode;
+    const res = await fetch(WORKER_URL + path, Object.assign({}, options, { headers }));
+    if (res.status === 401) {
+        isAdmin = false; authCode = null;
+        localStorage.removeItem('cod_auth');
+        document.body.classList.remove('admin-active');
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+        alert('Studio session expired — please log in again.');
+        renderMain();
+        if (currentMaker) renderCluster();
+        throw new Error('unauthorized');
+    }
+    return res;
+}
+
+/* ── LOAD — always pulls the live, current state from the Worker/D1 ── */
 async function loadArchive() {
     try {
-        const res = await fetch('data.json?nc=' + Date.now());
-        if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data)) {
-                // legacy flat format — treat all as works, no makers
-                archive = data; makers = [];
-            } else {
-                makers  = data.makers  || [];
-                archive = data.archive || [];
-            }
-            saveLocal();
-            log('LOADED // ' + archive.length + ' WORKS');
-        } else throw new Error();
-    } catch(e) {
-        try {
-            const s = localStorage.getItem('cod_data');
-            if (s) {
-                const data = JSON.parse(s);
-                if (Array.isArray(data)) { archive=data; makers=[]; }
-                else { makers=data.makers||[]; archive=data.archive||[]; }
-            }
-        } catch(err) { makers=[]; archive=[]; }
+        const res = await fetch(WORKER_URL + '/api/data?nc=' + Date.now());
+        if (!res.ok) throw new Error('server error');
+        const data = await res.json();
+        makers  = data.makers  || [];
+        archive = data.archive || [];
+        log('LOADED // ' + archive.length + ' WORKS');
+    } catch (e) {
+        makers = []; archive = [];
+        log('OFFLINE // COULD NOT REACH SERVER');
     }
-    purgeExpired();
     renderMain();
-}
-
-function saveLocal() {
-    localStorage.setItem('cod_data', JSON.stringify({ makers, archive }));
-}
-
-function purgeExpired() {
-    const now = Date.now();
-    archive = archive.filter(item => {
-        if (!item.uploadTime) return true;
-        return (now - item.uploadTime) < 24 * 60 * 60 * 1000;
-    });
-    makers = makers.filter(m => {
-        if (!m.uploadTime) return true;
-        return (now - m.uploadTime) < 24 * 60 * 60 * 1000;
-    });
-    saveLocal();
 }
 
 /* ── MAIN CANVAS — identity shapes ── */
@@ -938,7 +928,7 @@ function openEditProfile(id){
 }
 function closeProfileForm(){document.getElementById('profile-section').style.display='none';}
 
-document.getElementById('profileForm').onsubmit=function(e){
+document.getElementById('profileForm').onsubmit=async function(e){
     e.preventDefault();
     const editId=document.getElementById('profile-id').value;
     const name=document.getElementById('p-name').value.trim();
@@ -947,22 +937,37 @@ document.getElementById('profileForm').onsubmit=function(e){
         initials:document.getElementById('p-initials').value.trim().toUpperCase()||getInitials(name),
         role:document.getElementById('p-role').value,
         accessCode:document.getElementById('p-code').value.trim(),
-        uploadTime:editId?(makers.find(m=>String(m.id)===String(editId))?.uploadTime||Date.now()):Date.now()
     };
-    if(editId){
-        const idx=makers.findIndex(m=>String(m.id)===String(editId));
-        makers[idx]={...makers[idx],...data,id:editId};
-    } else {
-        data.id=String(Date.now()+Math.random());
-        makers.push(data);
+    const submitBtn=document.getElementById('profile-submit');
+    const original=submitBtn.textContent;
+    submitBtn.disabled=true; submitBtn.textContent='SAVING…';
+    try {
+        if(editId){
+            await apiFetch('/api/makers/'+editId, {
+                method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+            });
+        } else {
+            await apiFetch('/api/makers', {
+                method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+            });
+        }
+        closeProfileForm();
+        await loadArchive();
+    } catch(err) {
+        if(err.message!=='unauthorized') alert('Could not save profile: '+err.message);
+    } finally {
+        submitBtn.disabled=false; submitBtn.textContent=original;
     }
-    saveLocal();closeProfileForm();renderMain();
 };
-function deleteMaker(id){
-    makers=makers.filter(m=>String(m.id)!==String(id));
-    archive=archive.filter(w=>w.makerId!==id);
-    delete makerPos[id];
-    saveLocal();renderMain();
+async function deleteMaker(id){
+    if(!confirm('Delete this profile and all its works?')) return;
+    try {
+        await apiFetch('/api/makers/'+id, { method:'DELETE' });
+        delete makerPos[id];
+        await loadArchive();
+    } catch(err) {
+        if(err.message!=='unauthorized') alert('Could not delete: '+err.message);
+    }
 }
 
 /* ── WORK FORM — original DATAROOM logic ── */
@@ -988,9 +993,9 @@ function generateCode(fieldId){
     document.getElementById(fieldId).value=code;
 }
 
+let pendingUpload = null;
 function handleFileSelection(input){
     const file=input.files[0];if(!file)return;
-    document.getElementById('manualPath').value='media/'+file.name;
     const container=document.getElementById('form-preview-container');
     const src=URL.createObjectURL(file);
     if(file.type.startsWith('video')){
@@ -1000,6 +1005,32 @@ function handleFileSelection(input){
     } else {
         container.innerHTML=`<img src="${src}" style="max-height:100%;max-width:100%;object-fit:contain;">`;
     }
+
+    const pathField=document.getElementById('manualPath');
+    const submitBtn=document.getElementById('submit-btn');
+    const originalLabel=submitBtn.textContent;
+    pathField.value='UPLOADING…'; pathField.disabled=true;
+    submitBtn.disabled=true; submitBtn.textContent='UPLOADING FILE…';
+    log('UPLOADING…');
+
+    const fd=new FormData(); fd.append('file', file);
+    pendingUpload = apiFetch('/api/upload', { method:'POST', body:fd })
+        .then(res=>res.json())
+        .then(data=>{
+            if(data.error) throw new Error(data.error);
+            pathField.value=data.url;
+            log('UPLOAD_COMPLETE');
+        })
+        .catch(err=>{
+            pathField.value='';
+            if(err.message!=='unauthorized') alert('Upload failed: '+err.message);
+            log('UPLOAD_ERROR');
+        })
+        .finally(()=>{
+            pathField.disabled=false;
+            submitBtn.disabled=false; submitBtn.textContent=originalLabel;
+            pendingUpload=null;
+        });
 }
 
 function openEditForm(e,id){
@@ -1024,8 +1055,9 @@ function sanitizeMediaPath(path){
     return path;
 }
 
-document.getElementById('archiveForm').onsubmit=function(e){
+document.getElementById('archiveForm').onsubmit=async function(e){
     e.preventDefault();
+    if(pendingUpload){ await pendingUpload; }
     const editingId=document.getElementById('editing-id').value;
     const entryData={
         year:       document.getElementById('year').value,
@@ -1037,41 +1069,71 @@ document.getElementById('archiveForm').onsubmit=function(e){
         linkUrl:    document.getElementById('linkUrl').value.trim(),
         accessCode: document.getElementById('accessCode').value.trim(),
         makerId:    currentMaker ? currentMaker.id : null,
-        uploadTime: editingId?(archive.find(i=>String(i.id)===String(editingId))?.uploadTime||Date.now()):Date.now()
     };
-    if(editingId){
-        const idx=archive.findIndex(i=>String(i.id)===String(editingId));
-        archive[idx]={...archive[idx],...entryData,id:editingId};
-    } else {
-        entryData.id=String(Date.now()+Math.random());
-        archive.push(entryData);
+    const submitBtn=document.getElementById('submit-btn');
+    const original=submitBtn.textContent;
+    submitBtn.disabled=true; submitBtn.textContent='SAVING…';
+    try {
+        if(editingId){
+            await apiFetch('/api/works/'+editingId, {
+                method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entryData)
+            });
+        } else {
+            await apiFetch('/api/works', {
+                method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(entryData)
+            });
+        }
+        toggleReg();
+        await loadArchive();
+        if(currentMaker) renderCluster(); else renderMain();
+    } catch(err) {
+        if(err.message!=='unauthorized') alert('Could not save work: '+err.message);
+    } finally {
+        submitBtn.disabled=false; submitBtn.textContent=original;
     }
-    saveLocal();
-    toggleReg();
-    if(currentMaker) renderCluster(); else renderMain();
 };
 
-function deleteWork(id){
-    archive=archive.filter(i=>String(i.id)!==String(id));
-    delete workPos[id];
-    saveLocal();
-    if(currentMaker)renderCluster();
+async function deleteWork(id){
+    if(!confirm('Delete this work?')) return;
+    try {
+        await apiFetch('/api/works/'+id, { method:'DELETE' });
+        delete workPos[id];
+        await loadArchive();
+        if(currentMaker)renderCluster();
+    } catch(err) {
+        if(err.message!=='unauthorized') alert('Could not delete: '+err.message);
+    }
 }
 
 /* ── ADMIN ── */
-function secretHandshake(){
+async function secretHandshake(){
     const entry=prompt('Studio access code:');
     if(!entry)return;
-    if(entry.trim().toLowerCase()===STUDIO_CODE){
-        isAdmin=true;
-        document.body.classList.add('admin-active');
-        // force show all admin-only elements including cluster upload
-        document.querySelectorAll('.admin-only').forEach(el=>el.style.display='inline-block');
-        log('ADMIN // ACTIVE');
-    } else {
-        isAdmin=false;
-        document.body.classList.remove('admin-active');
-        document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');
+    const code=entry.trim();
+    try {
+        // Side-effect-free way to validate: PUT against a maker id that can't
+        // exist matches zero rows either way, but still requires valid auth.
+        const res=await fetch(WORKER_URL+'/api/makers/__login_check__', {
+            method:'PUT',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+code},
+            body:JSON.stringify({name:''})
+        });
+        if(res.ok){
+            authCode=code;
+            localStorage.setItem('cod_auth', code);
+            isAdmin=true;
+            document.body.classList.add('admin-active');
+            document.querySelectorAll('.admin-only').forEach(el=>el.style.display='inline-block');
+            log('ADMIN // ACTIVE');
+        } else {
+            authCode=null; localStorage.removeItem('cod_auth');
+            isAdmin=false;
+            document.body.classList.remove('admin-active');
+            document.querySelectorAll('.admin-only').forEach(el=>el.style.display='none');
+            alert('Invalid studio code');
+        }
+    } catch(err) {
+        alert('Could not reach server — check your connection.');
     }
     renderMain();
     if(currentMaker)renderCluster();
@@ -1080,31 +1142,27 @@ function secretHandshake(){
 function toggleMode(){document.body.classList.toggle('light-mode');}
 
 /* ── EXPORT / IMPORT ── */
-function exportData(){
-    const s='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify({makers,archive},null,2));
-    const a=document.createElement('a');a.href=s;a.download='data.json';
-    document.body.appendChild(a);a.click();a.remove();
-    log('EXPORT_COMPLETE');
-}
-function importData(){
-    const input=document.createElement('input');input.type='file';input.accept='.json';
-    input.onchange=ev=>{
-        const r=new FileReader();r.readAsText(ev.target.files[0]);
-        r.onload=re=>{
-            try{
-                const data=JSON.parse(re.target.result);
-                if(Array.isArray(data)){archive=data;makers=[];}
-                else{makers=data.makers||[];archive=data.archive||[];}
-                saveLocal();renderMain();log('IMPORT_COMPLETE');
-            }catch(err){log('IMPORT_ERROR');}
-        };
-    };input.click();
+async function exportData(){
+    try {
+        const res=await fetch(WORKER_URL+'/api/data');
+        const data=await res.json();
+        const s='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(data,null,2));
+        const a=document.createElement('a');a.href=s;a.download='commons-backup-'+Date.now()+'.json';
+        document.body.appendChild(a);a.click();a.remove();
+        log('EXPORT_COMPLETE');
+    } catch(err) {
+        alert('Export failed: '+err.message);
+    }
 }
 
 function log(msg){document.getElementById('console-display').textContent=msg;}
 function pad(n){return String(n).padStart(2,'0');}
 function getInitials(name){if(!name)return'?';return name.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,3);}
 
+if (isAdmin) {
+    document.body.classList.add('admin-active');
+    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
+}
 loadArchive();
 </script>
 </body>
