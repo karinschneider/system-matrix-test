@@ -1016,6 +1016,11 @@ function openEditForm(e,id){
     document.getElementById('submit-btn').textContent='UPDATE';
     toggleReg(false);
 }
+function sanitizeMediaPath(path){
+    const match = path.match(/^https?:\/\/f\d+\.backblazeb2\.com\/file\/commons-on-demand\/(.+)$/i);
+    if (match) return 'https://media.commons-on-demand.com/' + match[1];
+    return path;
+}
 
 document.getElementById('archiveForm').onsubmit=function(e){
     e.preventDefault();
@@ -1026,7 +1031,7 @@ document.getElementById('archiveForm').onsubmit=function(e){
         title:      document.getElementById('title').value.trim()||'UNTITLED',
         artist:     document.getElementById('artist').value.trim(),
         materials:  document.getElementById('materials').value,
-        manualPath: document.getElementById('manualPath').value.trim(),
+        manualPath: sanitizeMediaPath(document.getElementById('manualPath').value.trim()),
         linkUrl:    document.getElementById('linkUrl').value.trim(),
         accessCode: document.getElementById('accessCode').value.trim(),
         makerId:    currentMaker ? currentMaker.id : null,
