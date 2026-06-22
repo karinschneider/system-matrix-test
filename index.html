@@ -766,15 +766,34 @@ function shapeGeometry(mode) {
 }
 
 /* ── DRAG ── */
+        function makeDraggableIdentity(el, id) {
+    let down=false,sx,sy,ox,oy;
+    function start(cx,cy){ down=true;el._dragged=false;sx=cx;sy=cy;ox=parseFloat(el.style.left);oy=parseFloat(el.style.top); }
+    function move(cx,cy){ if(!down)return;const dx=cx-sx,dy=cy-sy;if(Math.abs(dx)>4||Math.abs(dy)>4)el._dragged=true;el.style.left=(ox+dx)+'px';el.style.top=(oy+dy)+'px';makerPos[id]={x:ox+dx,y:oy+dy}; }
+    function end(){ down=false; }
 
-    window.addEventListener('mousemove',(e)=>{
-        if(!down)return;
-        const dx=e.clientX-sx,dy=e.clientY-sy;
-        if(Math.abs(dx)>4||Math.abs(dy)>4)el._dragged=true;
-        el.style.left=(ox+dx)+'px';el.style.top=(oy+dy)+'px';
-        workPos[id]={x:ox+dx,y:oy+dy};
-    });
-    window.addEventListener('mouseup',()=>{down=false;});
+    el.addEventListener('mousedown',(e)=>{ if(e.target.tagName==='BUTTON')return;start(e.clientX,e.clientY);e.preventDefault(); });
+    window.addEventListener('mousemove',(e)=>{ move(e.clientX,e.clientY); });
+    window.addEventListener('mouseup', end);
+
+    el.addEventListener('touchstart',(e)=>{ if(e.target.tagName==='BUTTON')return;const t=e.touches[0];start(t.clientX,t.clientY);e.preventDefault(); },{passive:false});
+    el.addEventListener('touchmove',(e)=>{ const t=e.touches[0];move(t.clientX,t.clientY);e.preventDefault(); },{passive:false});
+    el.addEventListener('touchend', end);
+}
+
+function makeDraggableWork(el, id) {
+    let down=false,sx,sy,ox,oy;
+    function start(cx,cy){ down=true;el._dragged=false;sx=cx;sy=cy;ox=parseFloat(el.style.left);oy=parseFloat(el.style.top); }
+    function move(cx,cy){ if(!down)return;const dx=cx-sx,dy=cy-sy;if(Math.abs(dx)>4||Math.abs(dy)>4)el._dragged=true;el.style.left=(ox+dx)+'px';el.style.top=(oy+dy)+'px';workPos[id]={x:ox+dx,y:oy+dy}; }
+    function end(){ down=false; }
+
+    el.addEventListener('mousedown',(e)=>{ if(e.target.tagName==='BUTTON')return;start(e.clientX,e.clientY);e.preventDefault(); });
+    window.addEventListener('mousemove',(e)=>{ move(e.clientX,e.clientY); });
+    window.addEventListener('mouseup', end);
+
+    el.addEventListener('touchstart',(e)=>{ if(e.target.tagName==='BUTTON')return;const t=e.touches[0];start(t.clientX,t.clientY);e.preventDefault(); },{passive:false});
+    el.addEventListener('touchmove',(e)=>{ const t=e.touches[0];move(t.clientX,t.clientY);e.preventDefault(); },{passive:false});
+    el.addEventListener('touchend', end);
 }
 
 /* ── ACTIVATE / WATCH — original DATAROOM logic ── */
