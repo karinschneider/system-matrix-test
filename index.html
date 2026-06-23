@@ -798,7 +798,7 @@ function makeDraggableWork(el, id) {
 
 /* ── ACTIVATE / WATCH — original DATAROOM logic ── */
 function activateWork(item) {
-    if (item.accessCode && item.accessCode !== '') {
+    if (item.mode !== 'WWW' && item.mode !== 'SOCIAL' && item.accessCode && item.accessCode !== '') {
         const pass = prompt('Enter access code to watch:');
         if (!pass || pass.trim() !== item.accessCode.trim()) {
             alert('INVALID_CODE // ACCESS_DENIED'); return;
