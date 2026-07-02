@@ -273,6 +273,8 @@
             <div class="cluster-sub" id="cluster-role-el">MAKER</div>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
+            <span id="cluster-price" style="font-family:monospace;font-size:10px;letter-spacing:1px;"></span>
+            <button class="btn" id="buy-btn" onclick="buyCluster()" style="display:none;">GET CARD (TEST)</button>
             <span id="cluster-cd" style="font-family:monospace;font-size:9px;opacity:0.4;letter-spacing:1px;"></span>
             <button class="btn" id="start-cluster-btn" onclick="openClusterForm()" style="display:none;">+ START CLUSTER</button>
             <button class="btn" id="upload-btn" onclick="openUploadForm()" style="display:none;">+ UPLOAD</button>
@@ -506,6 +508,10 @@
             <div style="grid-column:span 2;" id="url-link-field">
                 <label id="url-link-label">URL Link</label>
                 <input type="text" id="linkUrl" placeholder="https://yourproject.com">
+            </div>
+            <div style="grid-column:span 2;">
+                <label>Price (USD — 0 = free)</label>
+                <input type="number" id="price" min="0" step="0.01" value="0">
             </div>
             <div style="grid-column:span 2;" id="access-code-field">
                 <label id="access-code-label">Viewer access code (optional)</label>
@@ -972,6 +978,12 @@ function openCluster(maker) {
     startBtn.style.display  = canEditThis ? 'inline-block' : 'none';
     uploadBtn.style.display = (canEditThis && currentCluster) ? 'inline-block' : 'none';
 
+    // Single gate: cluster price = sum of works (computed server-side)
+    const priceEl = document.getElementById('cluster-price');
+    const buyBtn  = document.getElementById('buy-btn');
+    priceEl.textContent = currentCluster ? ('$' + ((currentCluster.total || 0) / 100).toFixed(2)) : '';
+    buyBtn.style.display = currentCluster ? 'inline-block' : 'none';
+
     const cdEl = document.getElementById('cluster-cd');
     if (cdTimers['_cluster']) clearInterval(cdTimers['_cluster']);
     if (currentCluster) {
@@ -1244,6 +1256,24 @@ document.getElementById('profileForm').onsubmit=async function(e){
 async function deleteMaker(id){ if(!confirm('Delete this profile and all its works?')) return; try { await apiFetch('/api/makers/'+id,{method:'DELETE'}); delete makerPos[id]; await loadArchive(); } catch(err){ if(err.message!=='unauthorized') alert('Could not delete: '+err.message); } }
 
 /* ── CLUSTER FORM ── */
+async function buyCluster(){
+    if(!currentCluster) return;
+    const btn=document.getElementById('buy-btn'); btn.disabled=true;
+    try {
+        // TEST checkout — Dodo hosted checkout replaces this call later
+        const res = await fetch(WORKER_URL+'/api/checkout/'+encodeURIComponent(currentCluster.id),{method:'POST'});
+        if(!res.ok) throw new Error('checkout failed');
+        const data = await res.json();
+        const cardRes = await fetch(WORKER_URL+'/api/card/'+encodeURIComponent(data.txId));
+        if(!cardRes.ok) throw new Error('card failed');
+        const svg = await cardRes.text();
+        const a=document.createElement('a');
+        a.href=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
+        a.download='commons-card-'+data.txId+'.svg'; a.click();
+        log('CARD ISSUED // '+data.txId);
+    } catch(e){ alert('Checkout error: '+e.message); }
+    finally{ btn.disabled=false; }
+}
 function openClusterForm(){ document.getElementById('clusterForm').reset(); document.getElementById('cluster-edit-id').value=''; document.getElementById('cluster-form-section').style.display='flex'; }
 function closeClusterForm(){ document.getElementById('cluster-form-section').style.display='none'; }
 
@@ -1295,7 +1325,7 @@ function handleFileSelection(input){
 
 function openEditForm(e,id){
     e.stopPropagation(); const item=archive.find(i=>String(i.id)===String(id)); if(!item) return;
-    document.getElementById('editing-id').value=item.id; document.getElementById('year').value=item.year||''; document.getElementById('title').value=item.title||''; document.getElementById('mode').value=item.mode||'VIDEO'; document.getElementById('artist').value=item.artist||''; document.getElementById('materials').value=item.materials||''; document.getElementById('manualPath').value=item.manualPath||''; document.getElementById('linkUrl').value=item.linkUrl||''; document.getElementById('accessCode').value=item.accessCode||'';
+    document.getElementById('editing-id').value=item.id; document.getElementById('year').value=item.year||''; document.getElementById('title').value=item.title||''; document.getElementById('mode').value=item.mode||'VIDEO'; document.getElementById('artist').value=item.artist||''; document.getElementById('materials').value=item.materials||''; document.getElementById('manualPath').value=item.manualPath||''; document.getElementById('linkUrl').value=item.linkUrl||''; document.getElementById('accessCode').value=item.accessCode||''; document.getElementById('price').value=((item.price||0)/100).toFixed(2);
     document.getElementById('form-title').textContent='Edit Entry'; document.getElementById('submit-btn').textContent='UPDATE';
     handleModeChange(item.mode||'VIDEO'); document.getElementById('reg-section').style.display='flex';
 }
@@ -1305,7 +1335,7 @@ function sanitizeMediaPath(path){ if(!path) return ''; const match=path.match(/^
 document.getElementById('archiveForm').onsubmit=async function(e){
     e.preventDefault(); if(pendingUpload){ await pendingUpload; }
     const editingId=document.getElementById('editing-id').value;
-    const entryData={ year:document.getElementById('year').value, mode:document.getElementById('mode').value, title:document.getElementById('title').value.trim()||'UNTITLED', artist:document.getElementById('artist').value.trim(), materials:document.getElementById('materials').value, manualPath:sanitizeMediaPath(document.getElementById('manualPath').value.trim()), linkUrl:document.getElementById('linkUrl').value.trim(), accessCode:document.getElementById('accessCode').value.trim(), makerId:currentMaker?currentMaker.id:null, clusterId:currentCluster?currentCluster.id:null };
+    const entryData={ year:document.getElementById('year').value, mode:document.getElementById('mode').value, title:document.getElementById('title').value.trim()||'UNTITLED', artist:document.getElementById('artist').value.trim(), materials:document.getElementById('materials').value, manualPath:sanitizeMediaPath(document.getElementById('manualPath').value.trim()), linkUrl:document.getElementById('linkUrl').value.trim(), accessCode:document.getElementById('accessCode').value.trim(), price:Math.max(0,Math.round((parseFloat(document.getElementById('price').value)||0)*100)), makerId:currentMaker?currentMaker.id:null, clusterId:currentCluster?currentCluster.id:null };
     const submitBtn=document.getElementById('submit-btn'); const original=submitBtn.textContent; submitBtn.disabled=true; submitBtn.textContent='SAVING…';
     try {
         if(editingId){ await apiFetch('/api/works/'+editingId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(entryData)}); }
